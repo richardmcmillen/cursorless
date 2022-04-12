@@ -92,6 +92,7 @@ export type SurroundingPairName =
   | SimpleSurroundingPairName
   | ComplexSurroundingPairName;
 
+
 export type ScopeType =
   | "argumentOrParameter"
   | "anonymousFunction"
@@ -125,6 +126,7 @@ export type ScopeType =
   | "xmlElement"
   | "xmlEndTag"
   | "xmlStartTag";
+
 
 export type SubTokenType = "word" | "character";
 

@@ -4,7 +4,6 @@ import { stringTextFragmentExtractor as htmlStringTextFragmentExtractor } from "
 import { stringTextFragmentExtractor as jsonStringTextFragmentExtractor } from "./json";
 import { stringTextFragmentExtractor as phpStringTextFragmentExtractor } from "./php";
 import { stringTextFragmentExtractor as rubyStringTextFragmentExtractor } from "./ruby";
-import { stringTextFragmentExtractor as schemeStringTextFragmentExtractor } from "./scheme";
 import { stringTextFragmentExtractor as typescriptStringTextFragmentExtractor } from "./typescript";
 import { UnsupportedLanguageError } from "../errors";
 import { Range } from "vscode";
@@ -170,10 +169,6 @@ const textFragmentExtractors: Record<
   scala: constructDefaultTextFragmentExtractor(
     "scala",
     constructHackedStringTextFragmentExtractor("scala")
-  ),
-  scheme: constructDefaultTextFragmentExtractor(
-    "scheme",
-    schemeStringTextFragmentExtractor
   ),
   typescript: constructDefaultTextFragmentExtractor(
     "typescript",

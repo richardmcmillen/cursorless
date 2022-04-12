@@ -18,19 +18,18 @@ import php from "./php";
 import python from "./python";
 import markdown from "./markdown";
 import scala from "./scala";
-import { patternMatchers as scheme } from "./scheme";
 import go from "./go";
-import { patternMatchers as ruby } from "./ruby";
 import { UnsupportedLanguageError } from "../errors";
 import { SupportedLanguageId } from "./constants";
+import queryBasedSpecification from "./queryBasedSpecification";
 
 export function getNodeMatcher(
   languageId: string,
   scopeType: ScopeType,
   includeSiblings: boolean
 ): NodeMatcher {
-  const matchers = languageMatchers[languageId as SupportedLanguageId];
-
+  let matchers = languageMatchers[languageId as SupportedLanguageId];
+  
   if (matchers == null) {
     throw new UnsupportedLanguageError(languageId);
   }
@@ -66,9 +65,8 @@ const languageMatchers: Record<
   markdown,
   php,
   python,
-  ruby, 
+  ruby: queryBasedSpecification("ruby"),
   scala,
-  scheme,
   typescript,
   typescriptreact: typescript,
   xml: html,

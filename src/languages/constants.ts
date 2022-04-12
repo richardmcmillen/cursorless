@@ -15,7 +15,6 @@ export const supportedLanguageIds = [
   "python",
   "ruby",
   "scala",
-  "scheme",
   "typescript",
   "typescriptreact",
   "xml",
