@@ -144,6 +144,20 @@ function valueMatcher() {
 const mapTypes = ["object", "object_pattern"];
 const listTypes = ["array", "array_pattern"];
 
+
+
+// program [0, 0] - [1, 0]
+//   lexical_declaration [0, 0] - [0, 46]
+//     variable_declarator [0, 6] - [0, 45]
+//       name: identifier [0, 6] - [0, 14]
+//       value: array [0, 17] - [0, 45]
+//         string [0, 18] - [0, 26]
+//           string_fragment [0, 19] - [0, 25]
+//         string [0, 28] - [0, 44]
+//           string_fragment [0, 29] - [0, 43]
+
+
+
 const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
   map: mapTypes,
   list: listTypes,

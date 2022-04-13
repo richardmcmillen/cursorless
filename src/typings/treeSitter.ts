@@ -188,6 +188,7 @@ declare module "web-tree-sitter" {
         endPosition?: Point
       ): QueryCapture[];
       predicatesForPattern(patternIndex: number): PredicateResult[];
+      predicates: PredicateResult;
     }
   }
 

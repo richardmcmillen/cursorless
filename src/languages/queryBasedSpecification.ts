@@ -12,12 +12,19 @@ function getMatchers(queries: string): Partial<Record<ScopeType, NodeMatcherAlte
   const matchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {};
 
   for (const scopeType in scopeToKeyword as ScopeTypeToKeyword) {
+
+    if (scopeType === "argumentOrParameter") {o
+      continue;
+    }
+
     matchers[scopeType as ScopeType] = defaultMatcher(
       scopeToKeyword[scopeType as ScopeType],
       queries
     );
   }
-  
+
+  // matchers["argumentOrParameter"] = argumentMatcher(queries);
+
   return matchers;
 }
 

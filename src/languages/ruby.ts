@@ -1,4 +1,4 @@
-import {
+.c.c*]import {
   ancestorChainNodeMatcher,
   argumentMatcher,
   cascadingMatcher,

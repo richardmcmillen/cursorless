@@ -1,6 +1,14 @@
 import { Language, QueryCapture, SyntaxNode } from "web-tree-sitter";
-import { NodeMatcher, ScopeType, SelectionExtractor, SelectionWithEditor } from "../typings/Types";
+import Parser = require("web-tree-sitter");
+import { NodeMatcher, SelectionExtractor, SelectionWithEditor } from "../typings/Types";
 import { simpleSelectionExtractor } from "./nodeSelectors";
+
+function getQuery(
+  node: SyntaxNode,
+  scopeQuery: string): Parser.Query {
+    const language = node.tree.getLanguage() as Language;
+    return language.query(scopeQuery);
+}
 
 export function defaultMatcher(
   nodeNames: string[] | string,
@@ -9,11 +17,11 @@ export function defaultMatcher(
 ): NodeMatcher {
   return (selection: SelectionWithEditor, node: SyntaxNode) => {
     let pred = Array.isArray(nodeNames) ? nodeNames : [nodeNames];
-
-    const language = node.tree.getLanguage() as Language;
-    const query = language.query(scopeQuery);
+    const query = getQuery(node, scopeQuery);
+    
     let nodeToMatch = node;
     let capture: QueryCapture[] = [];
+
     while (nodeToMatch) {
       const captures = query.captures(nodeToMatch);
       capture = captures.filter((capture) => {
@@ -33,3 +41,30 @@ export function defaultMatcher(
     ];
   };
 }
+
+// function getPredicate(query: Query, searchName: string) {
+//   return query
+//     .predicates
+//     .filter((predicate) => predicate.length > 0)
+//     .find((predicate) => {
+//       name, matchesKeys = predicate.operator;
+//       return name === searchName;
+//     })
+// };
+
+// export function argumentMatcher(
+//   scopeQuery: string,
+//   selector: SelectionExtractor = simpleSelectionExtractor
+// ): NodeMatcher {
+//   return (selection: SelectionWithEditor, node: SyntaxNode) => {
+//     const query = getQuery(node, scopeQuery);
+
+
+//     return [
+//       {
+//         node: capture[0].node,
+//         selection: selector(selection.editor, capture[0].node),
+//       },
+//     ];
+//   };
+// }

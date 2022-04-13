@@ -15,6 +15,7 @@
   (pair
     key: (_) @key)) @map
 
-(hash
-  (pair
-    value: (_) @value)) @map
+(method_parameters
+  . (_) @parameter.inner
+  . ","? @_end
+   (#make-range! "parameter.outer" @parameter.inner @_end))

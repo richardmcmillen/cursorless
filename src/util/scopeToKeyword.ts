@@ -1,4 +1,4 @@
-import { ScopeType } from "../typings/Types"
+import { ScopeType } from "../typings/Types";
 
 export type ScopeTypeToKeyword = { [scope in ScopeType]: string };
 
