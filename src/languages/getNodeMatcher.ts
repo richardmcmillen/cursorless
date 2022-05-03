@@ -28,8 +28,8 @@ export function getNodeMatcher(
   scopeType: ScopeType,
   includeSiblings: boolean
 ): NodeMatcher {
-  let matchers = languageMatchers[languageId as SupportedLanguageId];
-  
+  const matchers = languageMatchers[languageId as SupportedLanguageId];
+
   if (matchers == null) {
     throw new UnsupportedLanguageError(languageId);
   }
