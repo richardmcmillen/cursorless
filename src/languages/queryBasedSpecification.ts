@@ -13,7 +13,7 @@ function getMatchers(queries: string): Partial<Record<ScopeType, NodeMatcherAlte
 
   for (const scopeType in scopeToKeyword as ScopeTypeToKeyword) {
 
-    if (scopeType === "argumentOrParameter") {o
+    if (scopeType === "argumentOrParameter") {
       continue;
     }
 

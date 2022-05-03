@@ -1,13 +1,14 @@
-import { Language, QueryCapture, SyntaxNode } from "web-tree-sitter";
-import Parser = require("web-tree-sitter");
-import { NodeMatcher, SelectionExtractor, SelectionWithEditor } from "../typings/Types";
+import { Language, QueryCapture, SyntaxNode, Query } from "web-tree-sitter";
+import {
+  NodeMatcher,
+  SelectionExtractor,
+  SelectionWithEditor,
+} from "../typings/Types";
 import { simpleSelectionExtractor } from "./nodeSelectors";
 
-function getQuery(
-  node: SyntaxNode,
-  scopeQuery: string): Parser.Query {
-    const language = node.tree.getLanguage() as Language;
-    return language.query(scopeQuery);
+function getQuery(node: SyntaxNode, scopeQuery: string): Query {
+  const language = node.tree.getLanguage() as Language;
+  return language.query(scopeQuery);
 }
 
 export function defaultMatcher(
@@ -18,7 +19,7 @@ export function defaultMatcher(
   return (selection: SelectionWithEditor, node: SyntaxNode) => {
     let pred = Array.isArray(nodeNames) ? nodeNames : [nodeNames];
     const query = getQuery(node, scopeQuery);
-    
+
     let nodeToMatch = node;
     let capture: QueryCapture[] = [];
 
@@ -27,7 +28,9 @@ export function defaultMatcher(
       capture = captures.filter((capture) => {
         return pred.includes(capture.name);
       });
-      if (capture.length > 0) { break; };
+      if (capture.length > 0) {
+        break;
+      }
       nodeToMatch = nodeToMatch.parent!;
     }
     if (capture.length === 0) {
@@ -58,7 +61,6 @@ export function defaultMatcher(
 // ): NodeMatcher {
 //   return (selection: SelectionWithEditor, node: SyntaxNode) => {
 //     const query = getQuery(node, scopeQuery);
-
 
 //     return [
 //       {
