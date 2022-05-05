@@ -152,8 +152,6 @@ function blockFinder(node: SyntaxNode) {
 }
 
 const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
-  map: mapTypes,
-  list: listTypes,
   statement: cascadingMatcher(
     patternMatcher(...STATEMENT_TYPES),
     ancestorChainNodeMatcher(
@@ -165,11 +163,6 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     )
   ),
   string: "string",
-  ifStatement: "if",
-  functionCall: "call",
-  comment: "comment",
-  namedFunction: "method",
-  functionName: "method[name]",
   anonymousFunction: cascadingMatcher(
     patternMatcher("lambda", "do_block"),
     matcher(blockFinder)
@@ -182,8 +175,6 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     "block_parameters",
     "argument_list"
   ),
-  class: "class",
-  className: "class[name]",
   collectionKey: trailingMatcher(["pair[key]"], [":"]),
   name: [
     "assignment[left]",

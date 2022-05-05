@@ -27,9 +27,13 @@ function getMatchers(
   return matchers;
 }
 
+/* 
+  TODO: Definitely cache this load, perhaps we can compare against a 
+  hash of the contents to know if we need to reload. This would be great DX for
+  people adding new scopeTypes. No need to recompile(I don't think?), just edit the scm
+  file. 
+*/
 export default function (languageName: string) {
-  console.log(__dirname);
-  console.log(path.dirname(__filename));
   const queries = fs.readFileSync(
     path.join(__dirname, `../queries/${languageName}/scopeTypes.scm`),
     "utf-8"

@@ -1,6 +1,16 @@
 (comment) @comment
-
 (method) @function
+(if) @if
+(call) @call
+(method) @method
+(method . name: (identifier) @functionName)
+(hash) @map
+
+[
+  (array)
+  (string_array)
+  (symbol_array)
+] @list
 
 [
  (string)
@@ -10,12 +20,5 @@
 ] @string
 
 (class) @class
+(class . name: (constant) @className)
 
-(hash
-  (pair
-    key: (_) @key)) @map
-
-(method_parameters
-  . (_) @parameter.inner
-  . ","? @_end
-   (#make-range! "parameter.outer" @parameter.inner @_end))
