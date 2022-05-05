@@ -17,6 +17,7 @@ import { patternMatchers as html } from "./html";
 import php from "./php";
 import python from "./python";
 import markdown from "./markdown";
+import { patternMatchers as ruby } from "./ruby";
 import scala from "./scala";
 import go from "./go";
 import { UnsupportedLanguageError } from "../errors";
@@ -65,12 +66,19 @@ const languageMatchers: Record<
   markdown,
   php,
   python,
-  ruby: queryBasedSpecification("ruby"),
+  ruby: mergeMatchers(ruby, "ruby"),
   scala,
   typescript,
   typescriptreact: typescript,
   xml: html,
 };
+
+function mergeMatchers(
+  regexMatcher: Record<ScopeType, NodeMatcher>,
+  languageName: string
+): Record<ScopeType, NodeMatcher> {
+  return Object.assign(regexMatcher, queryBasedSpecification(languageName));
+}
 
 function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {
   return (

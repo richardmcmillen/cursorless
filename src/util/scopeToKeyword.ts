@@ -31,10 +31,11 @@ const scopeToKeyword: ScopeTypeToKeyword = {
   sectionLevelFour: "section.4",
   sectionLevelFive: "section.5",
   sectionLevelSix: "section.6",
+  selector: "selector",
   xmlBothTags: "tags",
   xmlElement: "element",
   xmlEndTag: "tags.end",
-  xmlStartTag: "tags.start"
+  xmlStartTag: "tags.start",
 };
 
 export default scopeToKeyword;
