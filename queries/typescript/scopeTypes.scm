@@ -10,7 +10,7 @@
 ; [
 ;     (arrow_function)
 ;     (function)
-; ] @anonymousFunction 
+; ] @anonymousFunction
 
 ; The following doesn't work because we can't have a `(` before the field name (`key`)
 ; (

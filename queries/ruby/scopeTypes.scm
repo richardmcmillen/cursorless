@@ -3,7 +3,7 @@
 (if) @if
 (call) @call
 (method) @method
-(method 
+(method
   name: (_) @functionName)
 (hash) @map
 
@@ -16,15 +16,15 @@
 (regex) @regex
 
 (class) @class
-(class 
+(class
   name: (_) @className)
 
-(assignment 
+(assignment
   left: (_) @name)
-(operator_assignment 
+(operator_assignment
   left: (_) @name)
 (class
   name: (_) @name)
 (method
   name: (_) @name)
-  
+

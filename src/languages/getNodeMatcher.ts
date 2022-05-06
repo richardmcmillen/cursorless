@@ -81,10 +81,18 @@ function mergeMatchers(
   regexMatcher: Record<ScopeType, NodeMatcher>,
   languageName: string
 ): Record<ScopeType, NodeMatcher> {
-  const queryBasedMatchers: Record<ScopeType, NodeMatcher> = queryBasedSpecification(languageName);
-  const possibleDuplicateDefinitions = intersection(Object.keys(regexMatcher), Object.keys(queryBasedMatchers));
+  const queryBasedMatchers: Record<ScopeType, NodeMatcher> =
+    queryBasedSpecification(languageName);
+  const possibleDuplicateDefinitions = intersection(
+    Object.keys(regexMatcher),
+    Object.keys(queryBasedMatchers)
+  );
   if (possibleDuplicateDefinitions.length > 0) {
-    throw new Error(`ScopeTypes: [${possibleDuplicateDefinitions.join(', ')}] for ${languageName} defined via both Regex and Query code paths. Please remove duplicates`);
+    throw new Error(
+      `ScopeTypes: [${possibleDuplicateDefinitions.join(
+        ", "
+      )}] for ${languageName} defined via both Regex and Query code paths. Please remove duplicates`
+    );
   }
   return Object.assign(regexMatcher, queryBasedMatchers);
 }
