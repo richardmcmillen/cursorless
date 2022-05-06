@@ -137,7 +137,21 @@ function valueMatcher() {
   return matcher(
     (node: SyntaxNode) =>
       node.type === "jsx_attribute" ? node.lastChild : pFinder(node),
-    selectWithLeadingDelimiter("=", ":")
+    selectWithLeadingDelimiter(
+      ":",
+      "=",
+      "+=",
+      "-=",
+      "*=",
+      "/=",
+      "%=",
+      "**=",
+      "&=",
+      "|=",
+      "^=",
+      "<<=",
+      ">>="
+    )
   );
 }
 
@@ -163,10 +177,7 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     patternMatcher("yield_expression.~yield!")
   ),
   ifStatement: "if_statement",
-  anonymousFunction: [
-    "arrow_function",
-    "function",
-  ],
+  anonymousFunction: ["arrow_function", "function"],
   name: [
     "*[name]",
     "optional_parameter.identifier!",

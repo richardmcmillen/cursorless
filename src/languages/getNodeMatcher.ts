@@ -19,6 +19,7 @@ import python from "./python";
 import markdown from "./markdown";
 import { patternMatchers as ruby } from "./ruby";
 import scala from "./scala";
+import { patternMatchers as scss } from "./scss";
 import go from "./go";
 import { UnsupportedLanguageError } from "../errors";
 import { SupportedLanguageId } from "./constants";
@@ -54,6 +55,7 @@ const languageMatchers: Record<
 > = {
   c: cpp,
   cpp,
+  css: scss,
   csharp,
   clojure,
   go,
@@ -68,6 +70,7 @@ const languageMatchers: Record<
   python,
   ruby: mergeMatchers(ruby, "ruby"),
   scala,
+  scss,
   typescript,
   typescriptreact: typescript,
   xml: html,
