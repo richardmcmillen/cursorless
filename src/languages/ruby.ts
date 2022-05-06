@@ -167,7 +167,6 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     patternMatcher("lambda", "do_block"),
     matcher(blockFinder)
   ),
-  regularExpression: "regex",
   condition: conditionMatcher("*[condition]"),
   argumentOrParameter: argumentMatcher(
     "lambda_parameters",
@@ -176,12 +175,6 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     "argument_list"
   ),
   collectionKey: trailingMatcher(["pair[key]"], [":"]),
-  name: [
-    "assignment[left]",
-    "operator_assignment[left]",
-    "class[name]",
-    "method[name]",
-  ],
   value: leadingMatcher(
     [
       "pair[value]",

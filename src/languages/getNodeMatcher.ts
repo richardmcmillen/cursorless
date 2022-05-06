@@ -24,6 +24,7 @@ import go from "./go";
 import { UnsupportedLanguageError } from "../errors";
 import { SupportedLanguageId } from "./constants";
 import queryBasedSpecification from "./queryBasedSpecification";
+import { intersection } from "lodash";
 
 export function getNodeMatcher(
   languageId: string,
@@ -80,7 +81,12 @@ function mergeMatchers(
   regexMatcher: Record<ScopeType, NodeMatcher>,
   languageName: string
 ): Record<ScopeType, NodeMatcher> {
-  return Object.assign(regexMatcher, queryBasedSpecification(languageName));
+  const queryBasedMatchers: Record<ScopeType, NodeMatcher> = queryBasedSpecification(languageName);
+  const possibleDuplicateDefinitions = intersection(Object.keys(regexMatcher), Object.keys(queryBasedMatchers));
+  if (possibleDuplicateDefinitions.length > 0) {
+    throw new Error(`ScopeTypes: [${possibleDuplicateDefinitions.join(', ')}] defined via both Regex and Query code paths. Please remove duplicates`);
+  }
+  return Object.assign(regexMatcher, queryBasedMatchers);
 }
 
 function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {

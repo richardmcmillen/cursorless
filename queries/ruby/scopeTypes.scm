@@ -3,7 +3,8 @@
 (if) @if
 (call) @call
 (method) @method
-(method . name: (identifier) @functionName)
+(method 
+  name: (_) @functionName)
 (hash) @map
 
 [
@@ -12,13 +13,18 @@
   (symbol_array)
 ] @list
 
-[
- (string)
- (bare_string)
- (subshell)
- (heredoc_body)
-] @string
+(regex) @regex
 
 (class) @class
-(class . name: (constant) @className)
+(class 
+  name: (_) @className)
 
+(assignment 
+  left: (_) @name)
+(operator_assignment 
+  left: (_) @name)
+(class
+  name: (_) @name)
+(method
+  name: (_) @name)
+  
