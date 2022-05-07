@@ -21,9 +21,11 @@ export function defaultMatcher(
     const startPoint = generatePointFromSelection(selection, "start");
     const endPoint = generatePointFromSelection(selection, "end");
     const query = getQuery(node, scopeQuery);
-    let captures = query.captures(node.tree.rootNode, startPoint, endPoint).filter((capture) => {
-      return capture.name === scopeType;
-    });
+    let captures = query
+      .captures(node.tree.rootNode, startPoint, endPoint)
+      .filter((capture) => {
+        return capture.name === scopeType;
+      });
 
     if (captures.length === 0) {
       return null;
@@ -31,15 +33,21 @@ export function defaultMatcher(
     return [
       {
         node: captures[captures.length - 1].node,
-        selection: selector(selection.editor, captures[captures.length - 1].node),
+        selection: selector(
+          selection.editor,
+          captures[captures.length - 1].node
+        ),
       },
     ];
   };
 }
 
-function generatePointFromSelection(selection: SelectionWithEditor, pointType: ("start" | "end" )) {
+function generatePointFromSelection(
+  selection: SelectionWithEditor,
+  pointType: "start" | "end"
+) {
   return {
-      row: selection.selection[pointType].line,
-      column: selection.selection[pointType].character
+    row: selection.selection[pointType].line,
+    column: selection.selection[pointType].character,
   };
 }
