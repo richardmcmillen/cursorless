@@ -82,11 +82,15 @@ function mergeMatchers(
   languageName: string
 ): Record<ScopeType, NodeMatcher> {
   const queryBasedMatchers: Record<ScopeType, NodeMatcher> = queryBasedSpecification(languageName);
-  const possibleDuplicateDefinitions = intersection(Object.keys(regexMatcher), Object.keys(queryBasedMatchers));
-  if (possibleDuplicateDefinitions.length > 0) {
-    throw new Error(`ScopeTypes: [${possibleDuplicateDefinitions.join(', ')}] for ${languageName} defined via both Regex and Query code paths. Please remove duplicates`);
-  }
+  ensureUniqueMatchers(regexMatcher, queryBasedMatchers, languageName);
   return Object.assign(regexMatcher, queryBasedMatchers);
+}
+
+function ensureUniqueMatchers(regexMatcher: Record<ScopeType, NodeMatcher>, queryBasedMatchers: Record<ScopeType, NodeMatcher>, languageName: string) {
+  const duplicates = intersection(Object.keys(regexMatcher), Object.keys(queryBasedMatchers));
+  if (duplicates.length > 0) {
+    throw new Error(`ScopeTypes: [${duplicates.join(', ')}] for ${languageName} defined via both Regex and Query code paths. Please remove duplicates`);
+  }
 }
 
 function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {

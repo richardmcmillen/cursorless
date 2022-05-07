@@ -1,4 +1,5 @@
-import { Language, QueryCapture, SyntaxNode, Query } from "web-tree-sitter";
+import { Range } from "vscode";
+import { Language, SyntaxNode, Query } from "web-tree-sitter";
 import {
   NodeMatcher,
   SelectionExtractor,
@@ -12,61 +13,33 @@ function getQuery(node: SyntaxNode, scopeQuery: string): Query {
 }
 
 export function defaultMatcher(
-  nodeNames: string[] | string,
+  scopeType: string,
   scopeQuery: string,
   selector: SelectionExtractor = simpleSelectionExtractor
 ): NodeMatcher {
   return (selection: SelectionWithEditor, node: SyntaxNode) => {
-    let pred = Array.isArray(nodeNames) ? nodeNames : [nodeNames];
+    const startPoint = generatePointFromSelection(selection, "start");
+    const endPoint = generatePointFromSelection(selection, "end");
     const query = getQuery(node, scopeQuery);
+    let captures = query.captures(node.tree.rootNode, startPoint, endPoint).filter((capture) => {
+      return capture.name === scopeType;
+    });
 
-    let nodeToMatch = node;
-    let capture: QueryCapture[] = [];
-
-    while (nodeToMatch) {
-      const captures = query.captures(nodeToMatch);
-      capture = captures.filter((capture) => {
-        return pred.includes(capture.name);
-      });
-      if (capture.length > 0) {
-        break;
-      }
-      nodeToMatch = nodeToMatch.parent!;
-    }
-    if (capture.length === 0) {
+    if (captures.length === 0) {
       return null;
     }
     return [
       {
-        node: capture[0].node,
-        selection: selector(selection.editor, capture[0].node),
+        node: captures[captures.length - 1].node,
+        selection: selector(selection.editor, captures[captures.length - 1].node),
       },
     ];
   };
 }
 
-// function getPredicate(query: Query, searchName: string) {
-//   return query
-//     .predicates
-//     .filter((predicate) => predicate.length > 0)
-//     .find((predicate) => {
-//       name, matchesKeys = predicate.operator;
-//       return name === searchName;
-//     })
-// };
-
-// export function argumentMatcher(
-//   scopeQuery: string,
-//   selector: SelectionExtractor = simpleSelectionExtractor
-// ): NodeMatcher {
-//   return (selection: SelectionWithEditor, node: SyntaxNode) => {
-//     const query = getQuery(node, scopeQuery);
-
-//     return [
-//       {
-//         node: capture[0].node,
-//         selection: selector(selection.editor, capture[0].node),
-//       },
-//     ];
-//   };
-// }
+function generatePointFromSelection(selection: SelectionWithEditor, pointType: ("start" | "end" )) {
+  return {
+      row: selection.selection[pointType].line,
+      column: selection.selection[pointType].character
+  };
+}
