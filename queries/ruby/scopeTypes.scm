@@ -3,7 +3,7 @@
 (if) @if
 (call) @call
 (method) @namedFunction
-(method 
+(method
   name: (_) @functionName)
 (hash) @map
 
