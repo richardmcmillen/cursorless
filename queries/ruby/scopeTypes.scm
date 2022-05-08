@@ -2,8 +2,8 @@
 (method) @function
 (if) @if
 (call) @call
-(method) @method
-(method
+(method) @namedFunction
+(method 
   name: (_) @functionName)
 (hash) @map
 

@@ -158,7 +158,7 @@ declare module "web-tree-sitter" {
       query(source: string): Query;
     }
 
-    interface QueryCapture {
+    export interface QueryCapture {
       name: string;
       node: SyntaxNode;
     }
