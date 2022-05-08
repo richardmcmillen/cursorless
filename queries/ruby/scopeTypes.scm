@@ -27,4 +27,3 @@
   name: (_) @name)
 (method
   name: (_) @name)
-
