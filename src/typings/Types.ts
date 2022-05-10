@@ -13,6 +13,7 @@ import { CommandServerApi } from "../util/getExtensionApi";
 import { ReadOnlyHatMap } from "../core/IndividualHatMap";
 import Debug from "../core/Debug";
 import { TestCaseRecorder } from "../testUtil/TestCaseRecorder";
+import Cheatsheet from "../core/Cheatsheet";
 
 /**
  * A token within a text editor, including the current display line of the token
@@ -488,6 +489,11 @@ export interface Graph {
    * Used for recording test cases
    */
   readonly testCaseRecorder: TestCaseRecorder;
+
+  /**
+   * Used to display cheatsheet
+   */
+  readonly cheatsheet: Cheatsheet;
 }
 
 export type NodeMatcherValue = {
