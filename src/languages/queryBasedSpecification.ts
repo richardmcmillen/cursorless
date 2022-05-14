@@ -10,14 +10,24 @@ function getMatchers(
 ): Partial<Record<ScopeType, NodeMatcherAlternative>> {
   const matchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {};
   for (const scopeType in scopeToKeyword as ScopeTypeToKeyword) {
-    if (queries.match(`@${scopeType}`)) {
-      matchers[scopeType as ScopeType] = defaultMatcher(
-        scopeToKeyword[scopeType as ScopeType],
-        queries
-      );
-    }
+    generateMatcher(queries, scopeType, matchers);
   }
   return matchers;
+}
+
+function generateMatcher(
+  queries: string,
+  scopeType: string,
+  matchers: Partial<Record<ScopeType, NodeMatcherAlternative>>
+) {
+  if (queries.match(`@${scopeType}`)) {
+    const searchScopePresent = !!queries.match(`@${scopeType}.searchScope`);
+    matchers[scopeType as ScopeType] = defaultMatcher(
+      scopeToKeyword[scopeType as ScopeType],
+      searchScopePresent,
+      queries
+    );
+  }
 }
 
 export default function (languageName: string) {

@@ -499,7 +499,8 @@ export type NodeMatcherAlternative = NodeMatcher | string[] | string;
 
 export type NodeMatcher = (
   selection: SelectionWithEditor,
-  node: SyntaxNode
+  node: SyntaxNode,
+  siblings?: boolean
 ) => NodeMatcherValue[] | null;
 
 /**

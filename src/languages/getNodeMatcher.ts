@@ -43,7 +43,11 @@ export function getNodeMatcher(
     return notSupported;
   }
 
-  if (includeSiblings) {
+  // Relies on different API being returned from regex based matchers
+  // Consider initializing languageMatchers and queryLanguageMatchers
+  // Make decision here based on that.
+
+  if (includeSiblings && matcher.length === 2) {
     return matcherIncludeSiblings(matcher);
   }
 
@@ -79,9 +83,9 @@ const languageMatchers: Record<
 
 function mergeMatchers(
   regexMatcher: Record<ScopeType, NodeMatcher>,
-  languageName: string
+  languageName: SupportedLanguageId
 ): Record<ScopeType, NodeMatcher> {
-  const queryBasedMatchers: Record<ScopeType, NodeMatcher> =
+  const queryBasedMatchers: Partial<Record<ScopeType, NodeMatcher>> =
     queryBasedSpecification(languageName);
   ensureUniqueMatchers(regexMatcher, queryBasedMatchers, languageName);
   return Object.assign(regexMatcher, queryBasedMatchers);
@@ -89,7 +93,7 @@ function mergeMatchers(
 
 function ensureUniqueMatchers(
   regexMatcher: Record<ScopeType, NodeMatcher>,
-  queryBasedMatchers: Record<ScopeType, NodeMatcher>,
+  queryBasedMatchers: Partial<Record<ScopeType, NodeMatcher>>,
   languageName: string
 ) {
   const duplicates = intersection(
@@ -128,7 +132,7 @@ function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {
   };
 }
 
-function iterateNearestIterableAncestor(
+export function iterateNearestIterableAncestor(
   node: SyntaxNode,
   selection: SelectionWithEditor,
   nodeMatcher: NodeMatcher
