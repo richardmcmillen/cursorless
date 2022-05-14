@@ -22,14 +22,16 @@ suite("queryNodeMatcher", async function () {
 
     const matcher = defaultMatcher(nodeType, false, `(comment) @${nodeType}`);
     const code = `# hello world
-variable_def = "yep"
-# hello world
-# hello world`;
+  variable_def = "yep"
+  # hello world
+  # hello world`;
     const { selection, node } = await getNodeAndEditor(code);
     assertMatch(matcher, node, nodeType, selection, 3);
   });
 
-  test.skip("match multiple by searchScope", async () => {});
+  test.skip("match multiple by searchScope throws error", async () => {
+    // TODO
+  });
 });
 
 const getNodeAndEditor = async (

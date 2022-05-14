@@ -40,7 +40,7 @@ export function defaultMatcher(
     if (siblings) {
       let captures: QueryCapture[];
       if (searchScopePresent) {
-
+        throw new Error("searchScope based queries are not implemented.");
       } else {
         captures = findBySiblingsByParent(
           capture.node,
