@@ -92,40 +92,44 @@ export type SurroundingPairName =
   | SimpleSurroundingPairName
   | ComplexSurroundingPairName;
 
-export type ScopeType =
-  | "argumentOrParameter"
-  | "anonymousFunction"
-  | "attribute"
-  | "class"
-  | "className"
-  | "collectionItem"
-  | "collectionKey"
-  | "comment"
-  | "functionCall"
-  | "functionName"
-  | "ifStatement"
-  | "list"
-  | "map"
-  | "name"
-  | "namedFunction"
-  | "regularExpression"
-  | "statement"
-  | "string"
-  | "type"
-  | "value"
-  | "condition"
-  | "section"
-  | "sectionLevelOne"
-  | "sectionLevelTwo"
-  | "sectionLevelThree"
-  | "sectionLevelFour"
-  | "sectionLevelFive"
-  | "sectionLevelSix"
-  | "selector"
-  | "xmlBothTags"
-  | "xmlElement"
-  | "xmlEndTag"
-  | "xmlStartTag";
+// TODO: Move to constants file;
+export const scopes = [
+  "argumentOrParameter",
+  "anonymousFunction",
+  "attribute",
+  "class",
+  "className",
+  "collectionItem",
+  "collectionKey",
+  "comment",
+  "functionCall",
+  "functionName",
+  "ifStatement",
+  "list",
+  "map",
+  "name",
+  "namedFunction",
+  "regularExpression",
+  "statement",
+  "string",
+  "type",
+  "value",
+  "condition",
+  "section",
+  "sectionLevelOne",
+  "sectionLevelTwo",
+  "sectionLevelThree",
+  "sectionLevelFour",
+  "sectionLevelFive",
+  "sectionLevelSix",
+  "selector",
+  "xmlBothTags",
+  "xmlElement",
+  "xmlEndTag",
+  "xmlStartTag",
+] as const;
+
+export type bb = typeof scopes[number];
 
 export type SubTokenType = "word" | "character";
 

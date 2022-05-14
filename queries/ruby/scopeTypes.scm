@@ -1,7 +1,6 @@
 (comment) @comment
-(method) @function
-(if) @if
-(call) @call
+(if) @ifStatement
+(call) @functionCall
 (method) @namedFunction
 (method
   name: (_) @functionName)

@@ -1,15 +1,14 @@
 import * as fs from "fs";
-import { NodeMatcherAlternative, ScopeType } from "../typings/Types";
+import { NodeMatcherAlternative, scopes, ScopeType } from "../typings/Types";
 import { createPatternMatchers } from "../util/nodeMatchers";
 import { defaultMatcher } from "../util/queryNodeMatchers";
 import path = require("path");
-import scopeToKeyword, { ScopeTypeToKeyword } from "../util/scopeToKeyword";
 
 function getMatchers(
   queries: string
 ): Partial<Record<ScopeType, NodeMatcherAlternative>> {
   const matchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {};
-  for (const scopeType in scopeToKeyword as ScopeTypeToKeyword) {
+  for (const scopeType of scopes) {
     generateMatcher(queries, scopeType, matchers);
   }
   return matchers;
@@ -17,13 +16,13 @@ function getMatchers(
 
 function generateMatcher(
   queries: string,
-  scopeType: string,
+  scopeType: ScopeType,
   matchers: Partial<Record<ScopeType, NodeMatcherAlternative>>
 ) {
   if (queries.match(`@${scopeType}`)) {
     const searchScopePresent = !!queries.match(`@${scopeType}.searchScope`);
     matchers[scopeType as ScopeType] = defaultMatcher(
-      scopeToKeyword[scopeType as ScopeType],
+      scopeType,
       searchScopePresent,
       queries
     );
