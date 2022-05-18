@@ -1,0 +1,29 @@
+languageId: ruby
+command:
+  version: 1
+  spokenForm: change list
+  action: clearAndSetSelection
+  targets:
+    - type: primitive
+      modifier: {type: containingScope, scopeType: list, includeSiblings: false}
+initialState:
+  documentContents: |-
+    list = [1,2,3]
+
+    # Comment here 
+  selections:
+    - anchor: {line: 2, character: 15}
+      active: {line: 0, character: 10}
+  marks: {}
+finalState:
+  documentContents: |-
+    list = 
+
+    # Comment here 
+  selections:
+    - anchor: {line: 0, character: 7}
+      active: {line: 0, character: 7}
+  thatMark:
+    - anchor: {line: 0, character: 7}
+      active: {line: 0, character: 7}
+fullTargets: [{type: primitive, mark: {type: cursor}, selectionType: token, position: contents, insideOutsideType: inside, modifier: {type: containingScope, scopeType: list, includeSiblings: false}, isImplicit: false}]
