@@ -1,16 +1,20 @@
-import { Position, Range } from "vscode";
+import { Range } from "vscode";
 import { SyntaxNode, Query, Language, QueryCapture } from "web-tree-sitter";
+import Parser = require("web-tree-sitter");
 import {
   NodeMatcher,
   NodeMatcherValue,
   SelectionExtractor,
   SelectionWithEditor,
 } from "../typings/Types";
-import { simpleSelectionExtractor } from "./nodeSelectors";
+import {
+  makeRangeFromPositions,
+  simpleSelectionExtractor,
+} from "./nodeSelectors";
 
 export function defaultMatcher(
   scopeType: string,
-  searchScopePresent: boolean,
+  isIterationScopePresent: boolean,
   scopeQuery: string,
   selector: SelectionExtractor = simpleSelectionExtractor
 ): NodeMatcher {
@@ -22,7 +26,7 @@ export function defaultMatcher(
     siblings: boolean | undefined
   ): NodeMatcherValue[] | null => {
     if (!query) {
-      query = getQuery(node, scopeQuery);
+      query = getQuery(node.tree.getLanguage(), scopeQuery);
     }
 
     const captures = extractCaptures(
@@ -39,7 +43,7 @@ export function defaultMatcher(
     capture = selectCaptureByRange(captures, selection);
     if (siblings) {
       let captures: QueryCapture[];
-      if (searchScopePresent) {
+      if (isIterationScopePresent) {
         throw new Error("searchScope based queries are not implemented.");
       } else {
         captures = findBySiblingsByParent(
@@ -87,9 +91,9 @@ function selectCaptureByRange(
 ) {
   let capture: QueryCapture;
   captures.forEach((c) => {
-    const range: Range = new Range(
-      new Position(c.node.startPosition.row, c.node.startPosition.column),
-      new Position(c.node.endPosition.row, c.node.endPosition.column)
+    const range: Range = makeRangeFromPositions(
+      c.node.startPosition,
+      c.node.endPosition
     );
 
     const hasIntersection = selection.selection.intersection(range);
@@ -108,15 +112,14 @@ function selectCaptureByRange(
   return capture!;
 }
 
-function getQuery(node: SyntaxNode, scopeQuery: string): Query {
-  const language = node.tree.getLanguage() as Language;
+function getQuery(language: Language, scopeQuery: string): Query {
   return language.query(scopeQuery);
 }
 
 function generatePointFromSelection(
   selection: SelectionWithEditor,
   pointType: "start" | "end"
-) {
+): Parser.Point {
   return {
     row: selection.selection[pointType].line,
     column: selection.selection[pointType].character,

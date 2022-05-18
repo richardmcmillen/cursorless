@@ -93,7 +93,7 @@ export type SurroundingPairName =
   | ComplexSurroundingPairName;
 
 // TODO: Move to constants file;
-export const scopes = [
+export const scopeTypes = [
   "argumentOrParameter",
   "anonymousFunction",
   "attribute",
@@ -129,7 +129,7 @@ export const scopes = [
   "xmlStartTag",
 ] as const;
 
-export type bb = typeof scopes[number];
+export type ScopeType = typeof scopeTypes[number];
 
 export type SubTokenType = "word" | "character";
 
