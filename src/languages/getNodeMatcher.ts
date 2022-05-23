@@ -132,7 +132,7 @@ function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {
   };
 }
 
-export function iterateNearestIterableAncestor(
+function iterateNearestIterableAncestor(
   node: SyntaxNode,
   selection: SelectionWithEditor,
   nodeMatcher: NodeMatcher
