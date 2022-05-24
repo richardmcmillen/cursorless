@@ -5,8 +5,8 @@ import {
 } from "../typings/Types";
 import { createPatternMatchers } from "../util/nodeMatchers";
 import { defaultMatcher } from "../util/queryNodeMatchers";
-import { join } from "path";
-
+import * as fs from "fs";
+import * as path from "path";
 function getMatchers(
   queries: string
 ): Partial<Record<ScopeType, NodeMatcherAlternative>> {
@@ -35,13 +35,9 @@ function generateMatcher(
 }
 
 export default function (languageName: string) {
-  const queryPath = join(
-    "..",
-    // TODO: look at instantiating this as a class and using graph
-    // this.graph.extensionContext.extensionPath,
-    "queries",
-    languageName,
-    "scopeTypes.scm"
+  const queryPath = fs.readFileSync(
+    path.join(__dirname, `../queries/${languageName}/scopeTypes.scm`),
+    "utf-8"
   );
 
   return createPatternMatchers(getMatchers(queryPath));
