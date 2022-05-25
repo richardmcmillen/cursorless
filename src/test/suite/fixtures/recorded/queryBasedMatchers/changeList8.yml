@@ -7,23 +7,17 @@ command:
     - type: primitive
       modifier: {type: containingScope, scopeType: list, includeSiblings: false}
 initialState:
-  documentContents: |-
-    list = [1,2,3]
-
-    # Comment here 
+  documentContents: "[1,2,3, [4,5,6, [7, 8, 9]]]"
   selections:
-    - anchor: {line: 0, character: 10}
-      active: {line: 2, character: 15}
+    - anchor: {line: 0, character: 19}
+      active: {line: 0, character: 19}
   marks: {}
 finalState:
-  documentContents: |-
-    list = 
-
-    # Comment here 
+  documentContents: "[1,2,3, [4,5,6, ]]"
   selections:
-    - anchor: {line: 0, character: 7}
-      active: {line: 0, character: 7}
+    - anchor: {line: 0, character: 16}
+      active: {line: 0, character: 16}
   thatMark:
-    - anchor: {line: 0, character: 7}
-      active: {line: 0, character: 7}
+    - anchor: {line: 0, character: 16}
+      active: {line: 0, character: 16}
 fullTargets: [{type: primitive, mark: {type: cursor}, selectionType: token, position: contents, insideOutsideType: inside, modifier: {type: containingScope, scopeType: list, includeSiblings: false}, isImplicit: false}]
