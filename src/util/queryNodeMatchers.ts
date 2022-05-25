@@ -13,6 +13,15 @@ import {
 
 let query: Query;
 
+/**
+ *
+ * @param scopeType The scopeType the matcher is responsible for matching.
+ * @param isIterationScopePresent Indicates whether iteration scope will be defined via the scm file or derived
+ * by looking at the parent.
+ * @param scopeQuery The query with node matchers for a specific language.
+ * @param selector Unused, discard once legacy matching is removed.
+ * @returns A {@link NodeMatcher} object that can be used to for a specific scopeType.
+ */
 export function defaultMatcher(
   scopeType: string,
   isIterationScopePresent: boolean,
@@ -36,59 +45,83 @@ export function defaultMatcher(
       return null;
     }
     let selectedCaptures = selectCaptureByRange(rawCaptures, selection);
-    if (siblings) {
-      let siblingCaptures: QueryCapture[];
-      if (selectedCaptures!.length > 1) {
-        // TODO: Clarity.
-        throw new Error("Cannot match siblings on multiple captures.");
-      }
-      if (isIterationScopePresent) {
-        throw new Error("searchScope based queries are not implemented.");
-      } else {
-        siblingCaptures = findBySiblingsByParent(
-          selectedCaptures![0].node,
-          query,
-          scopeType
-        );
-      }
-
-      return siblingCaptures!.map((c) => {
-        return {
-          node: c.node,
-          selection: selector(selection.editor, c.node),
-        };
-      });
-    }
 
     if (!selectedCaptures) {
       return null;
-    } else {
-      const leadingNode = selectedCaptures[0].node;
-      // TODO: Could we target ES2022 and use .at(-1)?
-      const trailingNode = selectedCaptures[selectedCaptures.length - 1].node;
-      return [
-        {
-          // TODO: What should we do here if we are matching multiple nodes for the selection? Which node do we reference?
-          node: selectedCaptures[0].node,
-          selection: {
-            selection: new Selection(
-              new Position(
-                leadingNode.startPosition.row,
-                leadingNode.startPosition.column
-              ),
-              new Position(
-                trailingNode.endPosition.row,
-                trailingNode.endPosition.column
-              )
-            ),
-            context: {},
-          },
-        },
-      ];
     }
+
+    if (siblings) {
+      return generateCapturesIfSiblingsPresent(
+        selectedCaptures,
+        isIterationScopePresent,
+        query,
+        scopeType,
+        selector,
+        selection
+      );
+    }
+
+    const leadingNode = selectedCaptures[0].node;
+    // TODO: Could we target ES2022 and use .at(-1)?
+    const trailingNode = selectedCaptures[selectedCaptures.length - 1].node;
+    return [
+      {
+        // TODO: What should we do here if we are matching multiple nodes for the selection? Which node do we reference?
+        node: selectedCaptures[0].node,
+        selection: {
+          selection: new Selection(
+            new Position(
+              leadingNode.startPosition.row,
+              leadingNode.startPosition.column
+            ),
+            new Position(
+              trailingNode.endPosition.row,
+              trailingNode.endPosition.column
+            )
+          ),
+          context: {},
+        },
+      },
+    ];
   };
 }
 
+function generateCapturesIfSiblingsPresent(
+  selectedCaptures: QueryCapture[],
+  isIterationScopePresent: boolean,
+  query: Query,
+  scopeType: string,
+  selector: SelectionExtractor,
+  selection: SelectionWithEditor
+) {
+  if (selectedCaptures.length > 1) {
+    throw new Error(
+      "Cannot match siblings on captures which return a range. Try selecitng a single node."
+    );
+  } else if (isIterationScopePresent) {
+    throw new Error("searchScope based queries are not implemented.");
+  }
+
+  let siblingCaptures = findBySiblingsByParent(
+    selectedCaptures[0].node,
+    query,
+    scopeType
+  );
+
+  return siblingCaptures!.map((c) => {
+    return {
+      node: c.node,
+      selection: selector(selection.editor, c.node),
+    };
+  });
+}
+
+/**
+ * Accesses the memoized compiled query.
+ * @param node Used only to return the tree's language.
+ * @param scopeQuery The scm query file for a given language.
+ * @returns Query object
+ */
 function getQuery(node: SyntaxNode, scopeQuery: string): Query {
   if (!query) {
     query = node.tree.getLanguage().query(scopeQuery);
@@ -137,6 +170,15 @@ function getCapture(
   }
 }
 
+/**
+ * This method takes captures for a given range and scopeType, alongside a selection and then returns
+ * the relevant captures. If the selection is a single point, only return one capture. If the selection is a
+ * range, return a leading and trailing capture. If there is no leading capture, bail early.
+ *
+ * @param captures The matching nodes for a given scopeType and range.
+ * @param selection Used to derive start and end points which are matched against a capture.
+ * @returns The capture for a single point or the captures for a start and end point.
+ */
 function selectCaptureByRange(
   captures: QueryCapture[],
   selection: SelectionWithEditor
@@ -166,6 +208,12 @@ function selectCaptureByRange(
   }
 }
 
+/**
+ *
+ * @param captures The matching nodes for a given scopeType and range.
+ * @param position The position to match against.
+ * @returns The capture furthest down the tree which contains the position.
+ */
 function matchCapturesOnPosition(captures: QueryCapture[], position: Position) {
   let capture;
   for (const c of captures) {
@@ -190,12 +238,6 @@ function matchCapturesOnPosition(captures: QueryCapture[], position: Position) {
   return capture;
 }
 
-/**
- * Used to convert a selection to a Tree-Sitter Point.
- * @param selection
- * @param pointType
- * @returns A Tree-Sitter point
- */
 function generatePointFromSelection(
   selection: SelectionWithEditor,
   pointType: "start" | "end"
@@ -207,8 +249,8 @@ function generatePointFromSelection(
 }
 
 /**
- * Ported from legacy parent matching. This code is responsible for finding parents of nodes which do not have
- * a searchScope defined in the Tree-Sitter scm query file.
+ * Ported from legacy parent matching. This code is responsible for finding siblings of nodes which do not have
+ * a `searchScope` defined in the language's .scm query file.
  * @param node The matching node from the query and range matching. We will look at this node's parent to find siblings.
  * @param query The compiled query which will be run against the parent node.
  * @param scopeType The scope type that the matcher is responsible for matching.

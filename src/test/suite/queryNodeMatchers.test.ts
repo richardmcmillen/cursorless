@@ -25,7 +25,33 @@ variable_def = "yep"
 # hello world
 # hello world`;
       const { selection, node } = await getNodeAndEditor(code);
-      assertMatch(matcher, node, nodeType, selection, 3);
+      assertMatch(matcher, node, nodeType, selection, 3, {
+        includeSiblings: true,
+      });
+    });
+  });
+
+  suite("expands range", async () => {
+    const matcher = defaultMatcher("comment", false, `(comment) @comment`);
+    const nodeType = "comment";
+    const cursorPositions = {
+      start: new Position(0, 0),
+      end: new Position(1, 2),
+    };
+
+    test("matches with selection across two node the same type", async () => {
+      const code = `# hello
+# world`;
+      const { selection, node } = await getNodeAndEditor(code, cursorPositions);
+      const matches = assertMatch(matcher, node, nodeType, selection, 1);
+      assert.equal(matches![0].selection.selection.isSingleLine, false);
+    });
+
+    test("no match with selection across two node the different type", async () => {
+      const code = `# hello
+hello_world()`;
+      const { selection, node } = await getNodeAndEditor(code, cursorPositions);
+      assertMatch(matcher, node, nodeType, selection, 0);
     });
   });
 
@@ -35,6 +61,8 @@ variable_def = "yep"
       false,
       `(call) @functionCall`
     );
+
+    // Use a node type is used that does not take up the entire line following the it.
     const code = " hello_world()       ";
     const nonMatchPositions = [
       {
@@ -83,8 +111,13 @@ variable_def = "yep"
     }
   });
 
-  test.skip("match multiple by searchScope throws error", async () => {
-    // TODO
+  test("match multiple by searchScope throws error", async () => {
+    const code = "# hello world";
+    const matcher = defaultMatcher("comment", true, `(comment) @comment`);
+    const { selection, node } = await getNodeAndEditor(code);
+    assert.throws(() => {
+      matcher(selection, node, true);
+    });
   });
 });
 
@@ -117,16 +150,16 @@ const assertMatch = (
   nodeType: string,
   selectionWithEditor: SelectionWithEditor,
   expectedMatches: number,
-  message?: string
+  options: { includeSiblings?: boolean } = { includeSiblings: false }
 ) => {
-  const matches = matcher(selectionWithEditor, node, true);
-  // TODO: This is currently not failing tests when it should
+  const matches = matcher(selectionWithEditor, node, options?.includeSiblings);
   if (expectedMatches === 0) {
     assert.equal(matches, null);
   } else {
     assert.equal(expectedMatches, matches!.length);
     for (const match of matches!) {
-      assert.equal(nodeType, match.node.type, message);
+      assert.equal(nodeType, match.node.type);
     }
   }
+  return matches;
 };
