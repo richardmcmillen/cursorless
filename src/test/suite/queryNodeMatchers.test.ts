@@ -4,7 +4,7 @@ import { defaultMatcher } from "../../util/queryNodeMatchers";
 import { getParseTreeApi } from "../../util/getExtensionApi";
 import { selectionWithEditorFromPositions } from "../../util/selectionUtils";
 import { NodeMatcher, SelectionWithEditor } from "../../typings/Types";
-import { SyntaxNode } from "web-tree-sitter";
+import { Tree } from "web-tree-sitter";
 import { Position } from "vscode";
 
 suite("queryNodeMatcher", async () => {
@@ -15,8 +15,8 @@ suite("queryNodeMatcher", async () => {
     test("match single", async () => {
       const code = "# hello world";
 
-      const { selection, node } = await getNodeAndEditor(code);
-      assertMatch(matcher, node, nodeType, selection, 1);
+      const { selection, tree } = await getNodeAndEditor(code);
+      assertMatch(matcher, tree, nodeType, selection, 1);
     });
 
     test("match multiple by parent", async () => {
@@ -24,8 +24,8 @@ suite("queryNodeMatcher", async () => {
 variable_def = "yep"
 # hello world
 # hello world`;
-      const { selection, node } = await getNodeAndEditor(code);
-      assertMatch(matcher, node, nodeType, selection, 3, {
+      const { selection, tree } = await getNodeAndEditor(code);
+      assertMatch(matcher, tree, nodeType, selection, 3, {
         includeSiblings: true,
       });
     });
@@ -42,16 +42,16 @@ variable_def = "yep"
     test("matches with selection across two node the same type", async () => {
       const code = `# hello
 # world`;
-      const { selection, node } = await getNodeAndEditor(code, cursorPositions);
-      const matches = assertMatch(matcher, node, nodeType, selection, 1);
+      const { selection, tree } = await getNodeAndEditor(code, cursorPositions);
+      const matches = assertMatch(matcher, tree, nodeType, selection, 1);
       assert.equal(matches![0].selection.selection.isSingleLine, false);
     });
 
     test("no match with selection across two node the different type", async () => {
       const code = `# hello
 hello_world()`;
-      const { selection, node } = await getNodeAndEditor(code, cursorPositions);
-      assertMatch(matcher, node, nodeType, selection, 0);
+      const { selection, tree } = await getNodeAndEditor(code, cursorPositions);
+      assertMatch(matcher, tree, nodeType, selection, 0);
     });
   });
 
@@ -62,7 +62,7 @@ hello_world()`;
       `(call) @functionCall`
     );
 
-    // Use a node type is used that does not take up the entire line following the it.
+    // Use a node type that does not take up the entire line following the it.
     const code = " hello_world()       ";
     const nonMatchPositions = [
       {
@@ -105,8 +105,8 @@ hello_world()`;
     for (const position of nonMatchPositions) {
       test(`empty selection in whitespace before scope does not match: ${position.message}`, async () => {
         const nodeType = "comment";
-        const { selection, node } = await getNodeAndEditor(code, position);
-        assertMatch(matcher, node, nodeType, selection, 0);
+        const { selection, tree } = await getNodeAndEditor(code, position);
+        assertMatch(matcher, tree, nodeType, selection, 0);
       });
     }
   });
@@ -114,9 +114,9 @@ hello_world()`;
   test("match multiple by searchScope throws error", async () => {
     const code = "# hello world";
     const matcher = defaultMatcher("comment", true, `(comment) @comment`);
-    const { selection, node } = await getNodeAndEditor(code);
+    const { selection, tree } = await getNodeAndEditor(code);
     assert.throws(() => {
-      matcher(selection, node, true);
+      matcher(selection, tree, true);
     });
   });
 });
@@ -127,7 +127,7 @@ const getNodeAndEditor = async (
     start: new Position(0, 0),
     end: new Position(0, 0),
   }
-): Promise<{ selection: SelectionWithEditor; node: SyntaxNode }> => {
+): Promise<{ selection: SelectionWithEditor; tree: Tree }> => {
   const editor = await openNewEditor(code, "ruby");
   const { getTree } = await getParseTreeApi();
   const tree = getTree(editor.document);
@@ -140,19 +140,19 @@ const getNodeAndEditor = async (
 
   return {
     selection: selectionWithEditor,
-    node: tree.rootNode,
+    tree: tree,
   };
 };
 
 const assertMatch = (
   matcher: NodeMatcher,
-  node: SyntaxNode,
+  tree: Tree,
   nodeType: string,
   selectionWithEditor: SelectionWithEditor,
   expectedMatches: number,
   options: { includeSiblings?: boolean } = { includeSiblings: false }
 ) => {
-  const matches = matcher(selectionWithEditor, node, options?.includeSiblings);
+  const matches = matcher(selectionWithEditor, tree, options?.includeSiblings);
   if (expectedMatches === 0) {
     assert.equal(matches, null);
   } else {
