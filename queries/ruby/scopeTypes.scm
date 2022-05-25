@@ -10,6 +10,6 @@
   (symbol_array)
 ] @list
 
-(regex) @regex
+(regex) @regularExpression
 
 (class) @class
