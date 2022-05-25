@@ -35,11 +35,11 @@ variable_def = "yep"
       false,
       `(call) @functionCall`
     );
-    const code = "  hello_world()       ";
+    const code = " hello_world()       ";
     const nonMatchPositions = [
       {
-        start: new Position(0, 1),
-        end: new Position(0, 1),
+        start: new Position(0, 0),
+        end: new Position(0, 0),
         message: "Empty selection before the scope",
       },
       {
