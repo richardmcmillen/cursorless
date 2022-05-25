@@ -43,7 +43,7 @@ export function getNodeMatcher(
     return notSupported;
   }
 
-  if (includeSiblings && matcher.length === 2) {
+  if (includeSiblings) {
     return matcherIncludeSiblings(matcher);
   }
 
@@ -57,11 +57,11 @@ export function getQueryNodeMatcher(
   const matchers = queryBasedMatchers[languageId as SupportedLanguageId];
 
   if (matchers == null) {
+    // Note: When all nodes are matched using this method, return notSupported.
     return null;
   }
 
-  const matcher = matchers[scopeType];
-  return matcher;
+  return matchers[scopeType];
 }
 
 const languageMatchers: Record<
