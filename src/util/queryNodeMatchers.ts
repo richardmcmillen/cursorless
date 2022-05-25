@@ -1,11 +1,5 @@
 import { Position, Range, Selection } from "vscode";
-import {
-  SyntaxNode,
-  Query,
-  Language,
-  QueryCapture,
-  Point,
-} from "web-tree-sitter";
+import { SyntaxNode, Query, QueryCapture, Point } from "web-tree-sitter";
 import {
   NodeMatcher,
   NodeMatcherValue,
@@ -17,63 +11,65 @@ import {
   simpleSelectionExtractor,
 } from "./nodeSelectors";
 
+let query: Query;
+
 export function defaultMatcher(
   scopeType: string,
   isIterationScopePresent: boolean,
   scopeQuery: string,
   selector: SelectionExtractor = simpleSelectionExtractor
 ): NodeMatcher {
-  let query: Query;
-
   return (
     selection: SelectionWithEditor,
     node: SyntaxNode,
-    siblings: boolean | undefined
+    siblings: boolean = false
   ): NodeMatcherValue[] | null => {
-    if (!query) {
-      query = getQuery(node.tree.getLanguage(), scopeQuery);
-    }
-
-    const captures = getCapture(
+    const query = getQuery(node, scopeQuery);
+    const rawCaptures = getCapture(
       selection,
       node.tree.rootNode,
       query,
       scopeType
     );
 
-    if (!captures || captures.length === 0) {
+    if (!rawCaptures || rawCaptures.length === 0) {
       return null;
     }
-    let selectedCaptures = selectCaptureByRange(captures, selection);
+    let selectedCaptures = selectCaptureByRange(rawCaptures, selection);
     if (siblings) {
-      // let captures: QueryCapture[];
+      let siblingCaptures: QueryCapture[];
+      if (selectedCaptures!.length > 1) {
+        // TODO: Clarity.
+        throw new Error("Cannot match siblings on multiple captures.");
+      }
       if (isIterationScopePresent) {
         throw new Error("searchScope based queries are not implemented.");
       } else {
-        // captures = findBySiblingsByParent(
-        //   capture.node,
-        //   selection,
-        //   query,
-        //   scopeType
-        // );
+        siblingCaptures = findBySiblingsByParent(
+          selectedCaptures![0].node,
+          query,
+          scopeType
+        );
       }
 
-      // return captures!.map((c) => {
-      //   return {
-      //     node: c.node,
-      //     selection: selector(selection.editor, c.node),
-      //   };
-      // });
+      return siblingCaptures!.map((c) => {
+        return {
+          node: c.node,
+          selection: selector(selection.editor, c.node),
+        };
+      });
     }
+
     if (!selectedCaptures) {
       return null;
     } else {
       const leadingNode = selectedCaptures[0].node;
+      // TODO: Could we target ES2022 and use .at(-1)?
       const trailingNode = selectedCaptures[selectedCaptures.length - 1].node;
       return [
         {
-          // TODO: What should we do here if we are matching and expanding ranges?
-          node: selectedCaptures![0].node,
+          // TODO: What should we do here if we are matching multiple nodes for the selection? Which node do we reference?
+          node: selectedCaptures[0].node,
           selection: {
             selection: new Selection(
               new Position(
@@ -92,8 +88,16 @@ export function defaultMatcher(
     }
   };
 }
+
+function getQuery(node: SyntaxNode, scopeQuery: string): Query {
+  if (!query) {
+    query = node.tree.getLanguage().query(scopeQuery);
+  }
+  return query;
+}
+
 /**
- *
+ * Prioritize current position of the cursor, one space to the right and then finally one space to the left.
  * @param selection Used to derive start and end points for a selection.
  * @param root Query is run against the root node.
  * @param query Compiled query to run against the parsed tree.
@@ -109,62 +113,41 @@ function getCapture(
   const startPoint = generatePointFromSelection(selection, "start");
   const endPoint = generatePointFromSelection(selection, "end");
 
-  // Try to match on the selection.
-  let captures = extractMatchingCaptures(
-    startPoint,
-    endPoint,
-    root,
-    query,
-    scopeType
-  );
+  const positions = [
+    { startPoint, endPoint },
+    {
+      startPoint,
+      endPoint: { row: endPoint.row, column: endPoint.column + 1 },
+    },
+    {
+      startPoint: { row: startPoint.row, column: startPoint.column - 1 },
+      endPoint,
+    },
+  ];
 
-  if (captures.length > 0) {
-    return captures;
+  for (const { startPoint, endPoint } of positions) {
+    const captures = query
+      .captures(root, startPoint, endPoint)
+      .filter((capture) => {
+        return capture.name === scopeType;
+      });
+    if (captures && captures.length > 0) {
+      return captures;
+    }
   }
-  // Prioritize moving to the right.
-  captures = extractMatchingCaptures(
-    startPoint,
-    { row: endPoint.row, column: endPoint.column + 1 },
-    root,
-    query,
-    scopeType
-  );
-
-  if (captures.length > 0) {
-    return captures;
-  }
-  // Fallback to the left.
-  captures = extractMatchingCaptures(
-    { row: startPoint.row, column: startPoint.column - 1 },
-    endPoint,
-    root,
-    query,
-    scopeType
-  );
-  return captures;
-}
-
-function extractMatchingCaptures(
-  startPoint: Point,
-  endPoint: Point,
-  root: SyntaxNode,
-  query: Query,
-  scopeType: string
-) {
-  return query.captures(root, startPoint, endPoint).filter((capture) => {
-    return capture.name === scopeType;
-  });
 }
 
 function selectCaptureByRange(
   captures: QueryCapture[],
   selection: SelectionWithEditor
 ): QueryCapture[] | null {
+  let isSinglePoint = selection.selection.isEmpty;
+
   let leadingCapture = matchCapturesOnPosition(
     captures,
     selection.selection.start
   );
-  let isSinglePoint = selection.selection.isEmpty;
+
   if (!leadingCapture) {
     return null;
   }
@@ -205,10 +188,6 @@ function matchCapturesOnPosition(captures: QueryCapture[], position: Position) {
     }
   }
   return capture;
-}
-
-function getQuery(language: Language, scopeQuery: string): Query {
-  return language.query(scopeQuery);
 }
 
 /**
@@ -254,5 +233,5 @@ function findBySiblingsByParent(
     }
     parent = parent.parent;
   }
-  return [node];
+  return [];
 }
