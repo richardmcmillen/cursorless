@@ -1,4 +1,4 @@
-import { SyntaxNode } from "web-tree-sitter";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import { notSupported } from "../util/nodeMatchers";
 import { selectionWithEditorFromRange } from "../util/selectionUtils";
 import {
@@ -43,14 +43,24 @@ export function getNodeMatcher(
     return notSupported;
   }
 
-  // Relies on different API being returned from regex based matchers
-  // Consider initializing languageMatchers and queryLanguageMatchers
-  // Make decision here based on that.
-
   if (includeSiblings && matcher.length === 2) {
     return matcherIncludeSiblings(matcher);
   }
 
+  return matcher;
+}
+
+export function getQueryNodeMatcher(
+  languageId: string,
+  scopeType: ScopeType
+): NodeMatcher | null {
+  const matchers = queryBasedMatchers[languageId as SupportedLanguageId];
+
+  if (matchers == null) {
+    return null;
+  }
+
+  const matcher = matchers[scopeType];
   return matcher;
 }
 
@@ -73,7 +83,7 @@ const languageMatchers: Record<
   markdown,
   php,
   python,
-  ruby: mergeMatchers(ruby, "ruby"),
+  ruby,
   scala,
   scss,
   typescript,
@@ -81,19 +91,26 @@ const languageMatchers: Record<
   xml: html,
 };
 
-function mergeMatchers(
-  regexMatcher: Record<ScopeType, NodeMatcher>,
-  languageName: SupportedLanguageId
-): Record<ScopeType, NodeMatcher> {
-  const queryBasedMatchers: Partial<Record<ScopeType, NodeMatcher>> =
-    queryBasedSpecification(languageName);
-  ensureUniqueMatchers(regexMatcher, queryBasedMatchers, languageName);
-  return Object.assign(regexMatcher, queryBasedMatchers);
+const queryBasedMatchers: Partial<
+  Record<SupportedLanguageId, Record<ScopeType, NodeMatcher>>
+> = {
+  ruby: queryBasedSpecification("ruby"),
+};
+
+for (const languageId in queryBasedMatchers) {
+  let queryBasedMatcher = queryBasedMatchers[languageId as SupportedLanguageId];
+  if (queryBasedMatcher) {
+    ensureUniqueMatchers(
+      languageMatchers[languageId as SupportedLanguageId],
+      queryBasedMatcher,
+      languageId
+    );
+  }
 }
 
 function ensureUniqueMatchers(
   regexMatcher: Record<ScopeType, NodeMatcher>,
-  queryBasedMatchers: Partial<Record<ScopeType, NodeMatcher>>,
+  queryBasedMatchers: Partial<Record<ScopeType, NodeMatcher>> | undefined,
   languageName: string
 ) {
   const duplicates = intersection(
@@ -112,8 +129,9 @@ function ensureUniqueMatchers(
 function matcherIncludeSiblings(matcher: NodeMatcher): NodeMatcher {
   return (
     selection: SelectionWithEditor,
-    node: SyntaxNode
+    treeSitterHook: SyntaxNode | Tree
   ): NodeMatcherValue[] | null => {
+    let node = treeSitterHook as SyntaxNode;
     let matches = matcher(selection, node);
     if (matches == null) {
       return null;

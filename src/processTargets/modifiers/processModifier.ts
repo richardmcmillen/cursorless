@@ -16,7 +16,10 @@ import {
   TailModifier,
 } from "../../typings/Types";
 import { processSurroundingPair } from "./surroundingPair";
-import { getNodeMatcher } from "../../languages/getNodeMatcher";
+import {
+  getNodeMatcher,
+  getQueryNodeMatcher,
+} from "../../languages/getNodeMatcher";
 
 export type SelectionWithEditorWithContext = {
   selection: SelectionWithEditor;
@@ -80,27 +83,50 @@ export default function (
 
 function processScopeType(
   context: ProcessedTargetsContext,
-  selection: SelectionWithEditor,
+  selectionWithEditor: SelectionWithEditor,
   modifier: ContainingScopeModifier
 ): SelectionWithEditorWithContext[] | null {
-  const nodeMatcher = getNodeMatcher(
-    selection.editor.document.languageId,
-    modifier.scopeType,
-    modifier.includeSiblings ?? false
-  );
-  const node: SyntaxNode | null = context.getNodeAtLocation(
-    new Location(selection.editor.document.uri, selection.selection)
-  );
+  let result: SelectionWithEditorWithContext[] | null = null;
+  const languageId = selectionWithEditor.editor.document.languageId;
+  const scopeType = modifier.scopeType;
+  const queryNodeMatcher = getQueryNodeMatcher(languageId, scopeType);
+  if (queryNodeMatcher) {
+    const matchResult = queryNodeMatcher(
+      selectionWithEditor,
+      context.getTree(selectionWithEditor.editor.document),
+      modifier.includeSiblings
+    );
+    if (matchResult) {
+      result = matchResult.map((match) => {
+        return {
+          selection: selectionWithEditorFromRange(
+            selectionWithEditor,
+            match.selection.selection
+          ),
+          context: match.selection.context,
+        };
+      });
+    }
+  } else {
+    const nodeMatcher = getNodeMatcher(
+      selectionWithEditor.editor.document.languageId,
+      modifier.scopeType,
+      modifier.includeSiblings ?? false
+    );
+    const node: SyntaxNode | null = context.getNodeAtLocation(
+      new Location(
+        selectionWithEditor.editor.document.uri,
+        selectionWithEditor.selection
+      )
+    );
+    result = findNearestContainingAncestorNode(
+      node,
+      nodeMatcher,
+      selectionWithEditor
+    );
+  }
 
-  // TODO: Determine if new or old matcher here, if new, don't call ancestor, just check adn return
-
-  const result = findNearestContainingAncestorNode(
-    node,
-    nodeMatcher,
-    selection
-  );
-
-  if (result == null) {
+  if (!result) {
     throw new Error(`Couldn't find containing ${modifier.scopeType}`);
   }
 

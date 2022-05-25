@@ -1,5 +1,5 @@
 import { Position, Range, Selection } from "vscode";
-import { SyntaxNode, Query, QueryCapture, Point } from "web-tree-sitter";
+import { SyntaxNode, Query, QueryCapture, Point, Tree } from "web-tree-sitter";
 import {
   NodeMatcher,
   NodeMatcherValue,
@@ -30,16 +30,12 @@ export function defaultMatcher(
 ): NodeMatcher {
   return (
     selection: SelectionWithEditor,
-    node: SyntaxNode,
+    treeSitterHook: Tree | SyntaxNode,
     siblings: boolean = false
   ): NodeMatcherValue[] | null => {
-    const query = getQuery(node, scopeQuery);
-    const rawCaptures = getCapture(
-      selection,
-      node.tree.rootNode,
-      query,
-      scopeType
-    );
+    const tree = treeSitterHook as Tree;
+    const query = getQuery(tree, scopeQuery);
+    const rawCaptures = getCapture(selection, tree.rootNode, query, scopeType);
 
     if (!rawCaptures || rawCaptures.length === 0) {
       return null;
@@ -122,9 +118,9 @@ function generateCapturesIfSiblingsPresent(
  * @param scopeQuery The scm query file for a given language.
  * @returns Query object
  */
-function getQuery(node: SyntaxNode, scopeQuery: string): Query {
+function getQuery(tree: Tree, scopeQuery: string): Query {
   if (!query) {
-    query = node.tree.getLanguage().query(scopeQuery);
+    query = tree.getLanguage().query(scopeQuery);
   }
   return query;
 }
