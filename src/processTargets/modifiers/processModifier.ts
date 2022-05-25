@@ -92,6 +92,8 @@ function processScopeType(
     new Location(selection.editor.document.uri, selection.selection)
   );
 
+  // TODO: Determine if new or old matcher here, if new, don't call ancestor, just check adn return
+
   const result = findNearestContainingAncestorNode(
     node,
     nodeMatcher,
