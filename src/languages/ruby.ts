@@ -163,6 +163,7 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     )
   ),
   string: "string",
+  functionName: "method[name]",
   anonymousFunction: cascadingMatcher(
     patternMatcher("lambda", "do_block"),
     matcher(blockFinder)
@@ -175,6 +176,13 @@ const nodeMatchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {
     "argument_list"
   ),
   collectionKey: trailingMatcher(["pair[key]"], [":"]),
+  className: "class[name]",
+  name: [
+    "assignment[left]",
+    "operator_assignment[left]",
+    "class[name]",
+    "method[name]",
+  ],
   value: leadingMatcher(
     [
       "pair[value]",

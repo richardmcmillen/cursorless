@@ -2,8 +2,6 @@
 (if) @ifStatement
 (call) @functionCall
 (method) @namedFunction
-(method
-  name: (_) @functionName)
 (hash) @map
 
 [
@@ -15,14 +13,3 @@
 (regex) @regex
 
 (class) @class
-(class
-  name: (_) @className)
-
-(assignment
-  left: (_) @name)
-(operator_assignment
-  left: (_) @name)
-(class
-  name: (_) @name)
-(method
-  name: (_) @name)

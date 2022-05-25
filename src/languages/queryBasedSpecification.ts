@@ -22,9 +22,9 @@ function generateMatcher(
   scopeType: ScopeType,
   matchers: Partial<Record<ScopeType, NodeMatcherAlternative>>
 ) {
-  if (queries.match(`@${scopeType}`)) {
+  if (queries.match(`@${scopeType}[^a-zA-Z]`)) {
     const isIterationScopePresent = !!queries.match(
-      `@${scopeType}.iterationScope`
+      `@${scopeType}.iterationScope[^a-zA-Z]`
     );
     matchers[scopeType as ScopeType] = defaultMatcher(
       scopeType,
