@@ -1,4 +1,3 @@
 suite("queryBasedSpecification", async function () {
-  test("generates the correct matchers", async () => {
-  });
+  test("generates the correct matchers", async () => {});
 });
