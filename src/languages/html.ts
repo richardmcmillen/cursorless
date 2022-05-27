@@ -3,6 +3,12 @@ import {
   leadingMatcher,
   patternMatcher,
 } from "../util/nodeMatchers";
+import {
+  ScopeType,
+  NodeMatcherAlternative,
+  SelectionWithEditor,
+} from "../typings/Types";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import { NodeMatcherAlternative, SelectionWithEditor } from "../typings/Types";
 import { SimpleScopeTypeType } from "../typings/target.types";
 import { SyntaxNode } from "web-tree-sitter";
@@ -13,7 +19,7 @@ const attribute = "*?.attribute!";
 const getStartTag = patternMatcher(`*?.start_tag!`);
 const getEndTag = patternMatcher(`*?.end_tag!`);
 
-const getTags = (selection: SelectionWithEditor, node: SyntaxNode) => {
+const getTags = (selection: SelectionWithEditor, node: SyntaxNode | Tree) => {
   const startTag = getStartTag(selection, node);
   const endTag = getEndTag(selection, node);
   return startTag != null && endTag != null ? startTag.concat(endTag) : null;

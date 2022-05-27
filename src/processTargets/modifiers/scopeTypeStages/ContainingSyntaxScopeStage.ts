@@ -1,10 +1,14 @@
 import { Location, Selection } from "vscode";
 import { SyntaxNode } from "web-tree-sitter";
-import { getNodeMatcher } from "../../../languages/getNodeMatcher";
+import {
+  getNodeMatcher,
+  getQueryNodeMatcher,
+} from "../../../languages/getNodeMatcher";
 import {
   ContainingScopeModifier,
   EveryScopeModifier,
   SimpleScopeType,
+  SimpleScopeTypeType,
   Target,
 } from "../../../typings/target.types";
 import {
@@ -31,23 +35,12 @@ export default class implements ModifierStage {
   ) {}
 
   run(context: ProcessedTargetsContext, target: Target): ScopeTypeTarget[] {
-    const nodeMatcher = getNodeMatcher(
-      target.editor.document.languageId,
-      this.modifier.scopeType.type,
-      this.modifier.type === "everyScope"
-    );
-
-    const node: SyntaxNode | null = context.getNodeAtLocation(
-      new Location(target.editor.document.uri, target.contentRange)
-    );
-
-    const scopeNodes = findNearestContainingAncestorNode(node, nodeMatcher, {
-      editor: target.editor,
-      selection: new Selection(
-        target.contentRange.start,
-        target.contentRange.end
-      ),
-    });
+    const languageId = target.editor.document.languageId;
+    const scopeType = this.modifier.scopeType.type;
+    const queryNodeMatcher = getQueryNodeMatcher(languageId, scopeType);
+    const scopeNodes = !queryNodeMatcher
+      ? this.runLegacyNodeMatcher(languageId, scopeType, context, target)
+      : this.runQueryBasedNodeMatcher(queryNodeMatcher, context, target);
 
     if (scopeNodes == null) {
       throw new Error(
@@ -76,6 +69,63 @@ export default class implements ModifierStage {
       });
     });
   }
+
+  private runLegacyNodeMatcher(
+    languageId: string,
+    scopeTypeType: SimpleScopeTypeType,
+    context: ProcessedTargetsContext,
+    target: Target
+  ) {
+    const nodeMatcher = getNodeMatcher(
+      languageId,
+      scopeTypeType,
+      this.modifier.type === "everyScope"
+    );
+
+    const node: SyntaxNode | null = context.getNodeAtLocation(
+      new Location(target.editor.document.uri, target.contentRange)
+    );
+
+    return findNearestContainingAncestorNode(
+      node,
+      nodeMatcher,
+      getSelectionWithEditor(target)
+    );
+  }
+
+  private runQueryBasedNodeMatcher(
+    queryNodeMatcher: NodeMatcher,
+    context: ProcessedTargetsContext,
+    target: Target
+  ) {
+    const selectionWithEditor = getSelectionWithEditor(target);
+
+    const matchResult = queryNodeMatcher(
+      selectionWithEditor,
+      context.getTree(selectionWithEditor.editor.document),
+      this.modifier.type === "everyScope"
+    );
+
+    return matchResult
+      ? matchResult.map((match) => ({
+          selection: selectionWithEditorFromRange(
+            selectionWithEditor,
+            match.selection.selection
+          ),
+          context: match.selection.context,
+        }))
+      : null;
+  }
+}
+
+function getSelectionWithEditor(target: Target) {
+  return {
+    editor: target.editor,
+    selection: new Selection(
+      target.contentRange.start,
+      target.contentRange.end
+    ),
+  };
 }
 
 function findNearestContainingAncestorNode(
