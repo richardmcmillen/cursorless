@@ -1,17 +1,11 @@
+import { SyntaxNode, Tree } from "web-tree-sitter";
+import { SimpleScopeTypeType } from "../typings/target.types";
+import { NodeMatcherAlternative, SelectionWithEditor } from "../typings/Types";
 import {
   createPatternMatchers,
   leadingMatcher,
   patternMatcher,
 } from "../util/nodeMatchers";
-import {
-  ScopeType,
-  NodeMatcherAlternative,
-  SelectionWithEditor,
-} from "../typings/Types";
-import { SyntaxNode, Tree } from "web-tree-sitter";
-import { NodeMatcherAlternative, SelectionWithEditor } from "../typings/Types";
-import { SimpleScopeTypeType } from "../typings/target.types";
-import { SyntaxNode } from "web-tree-sitter";
 import { getNodeRange } from "../util/nodeSelectors";
 
 const attribute = "*?.attribute!";

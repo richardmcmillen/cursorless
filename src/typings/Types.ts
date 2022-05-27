@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ExtensionContext, Location } from "vscode";
-import { SyntaxNode } from "web-tree-sitter";
+import { SyntaxNode, Tree } from "web-tree-sitter";
 import { ActionRecord } from "../actions/actions.types";
 import Debug from "../core/Debug";
 import Decorations from "../core/Decorations";

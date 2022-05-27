@@ -101,7 +101,17 @@ export const simpleScopeTypeTypes = [
   "xmlElement",
   "xmlEndTag",
   "xmlStartTag",
-] as const;
+  // Text based scopes,
+  "token",
+  "line",
+  "notebookCell",
+  "paragraph",
+  "document",
+  "character",
+  "word",
+  "nonWhitespaceSequence",
+  "url",
+];
 
 export type SimpleScopeTypeType = typeof simpleScopeTypeTypes[number];
 

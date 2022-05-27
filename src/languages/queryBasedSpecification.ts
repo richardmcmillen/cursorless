@@ -1,33 +1,35 @@
-import {
-  NodeMatcherAlternative,
-  scopeTypes,
-  ScopeType,
-} from "../typings/Types";
-import { createPatternMatchers } from "../util/nodeMatchers";
-import { defaultMatcher } from "../util/queryNodeMatchers";
 import * as fs from "fs";
 import * as path from "path";
+import {
+  SimpleScopeTypeType,
+  simpleScopeTypeTypes,
+} from "../typings/target.types";
+import { NodeMatcherAlternative } from "../typings/Types";
+import { createPatternMatchers } from "../util/nodeMatchers";
+import { defaultMatcher } from "../util/queryNodeMatchers";
+
 function getMatchers(
   queries: string
-): Partial<Record<ScopeType, NodeMatcherAlternative>> {
-  const matchers: Partial<Record<ScopeType, NodeMatcherAlternative>> = {};
-  for (const scopeType of scopeTypes) {
-    generateMatcher(queries, scopeType, matchers);
+): Partial<Record<SimpleScopeTypeType, NodeMatcherAlternative>> {
+  const matchers: Partial<Record<SimpleScopeTypeType, NodeMatcherAlternative>> =
+    {};
+  for (const scopeTypeType of simpleScopeTypeTypes) {
+    generateMatcher(queries, scopeTypeType, matchers);
   }
   return matchers;
 }
 
 function generateMatcher(
   queries: string,
-  scopeType: ScopeType,
-  matchers: Partial<Record<ScopeType, NodeMatcherAlternative>>
+  scopeTypeType: SimpleScopeTypeType,
+  matchers: Partial<Record<SimpleScopeTypeType, NodeMatcherAlternative>>
 ) {
-  if (queries.match(`@${scopeType}[^a-zA-Z]`)) {
+  if (queries.match(`@${scopeTypeType}[^a-zA-Z]`)) {
     const isIterationScopePresent = !!queries.match(
-      `@${scopeType}.iterationScope[^a-zA-Z]`
+      `@${scopeTypeType}.iterationScope[^a-zA-Z]`
     );
-    matchers[scopeType as ScopeType] = defaultMatcher(
-      scopeType,
+    matchers[scopeTypeType as SimpleScopeTypeType] = defaultMatcher(
+      scopeTypeType,
       isIterationScopePresent,
       queries
     );

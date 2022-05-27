@@ -1,30 +1,30 @@
+import { intersection } from "lodash";
 import { SyntaxNode, Tree } from "web-tree-sitter";
-import { notSupported } from "../util/nodeMatchers";
-import { selectionWithEditorFromRange } from "../util/selectionUtils";
+import { UnsupportedLanguageError } from "../errors";
+import { SimpleScopeTypeType } from "../typings/target.types";
 import {
   NodeMatcher,
   NodeMatcherValue,
   SelectionWithEditor,
 } from "../typings/Types";
-import { SimpleScopeTypeType } from "../typings/target.types";
-import cpp from "./cpp";
+import { notSupported } from "../util/nodeMatchers";
+import { selectionWithEditorFromRange } from "../util/selectionUtils";
 import clojure from "./clojure";
+import { SupportedLanguageId } from "./constants";
+import cpp from "./cpp";
 import csharp from "./csharp";
-import { patternMatchers as json } from "./json";
-import { patternMatchers as typescript } from "./typescript";
-import java from "./java";
+import go from "./go";
 import { patternMatchers as html } from "./html";
+import java from "./java";
+import { patternMatchers as json } from "./json";
+import markdown from "./markdown";
 import php from "./php";
 import python from "./python";
-import markdown from "./markdown";
+import queryBasedSpecification from "./queryBasedSpecification";
 import { patternMatchers as ruby } from "./ruby";
 import scala from "./scala";
 import { patternMatchers as scss } from "./scss";
-import go from "./go";
-import { UnsupportedLanguageError } from "../errors";
-import { SupportedLanguageId } from "./constants";
-import queryBasedSpecification from "./queryBasedSpecification";
-import { intersection } from "lodash";
+import { patternMatchers as typescript } from "./typescript";
 
 export function getNodeMatcher(
   languageId: string,
@@ -52,7 +52,7 @@ export function getNodeMatcher(
 
 export function getQueryNodeMatcher(
   languageId: string,
-  scopeType: ScopeType
+  scopeTypeType: SimpleScopeTypeType
 ): NodeMatcher | null {
   const matchers = queryBasedMatchers[languageId as SupportedLanguageId];
 
@@ -61,7 +61,7 @@ export function getQueryNodeMatcher(
     return null;
   }
 
-  return matchers[scopeType];
+  return matchers[scopeTypeType];
 }
 
 const languageMatchers: Record<
@@ -92,7 +92,7 @@ const languageMatchers: Record<
 };
 
 const queryBasedMatchers: Partial<
-  Record<SupportedLanguageId, Record<ScopeType, NodeMatcher>>
+  Record<SupportedLanguageId, Record<SimpleScopeTypeType, NodeMatcher>>
 > = {
   ruby: queryBasedSpecification("ruby"),
 };
@@ -109,8 +109,10 @@ for (const languageId in queryBasedMatchers) {
 }
 
 function ensureUniqueMatchers(
-  regexMatcher: Record<ScopeType, NodeMatcher>,
-  queryBasedMatchers: Partial<Record<ScopeType, NodeMatcher>> | undefined,
+  regexMatcher: Record<SimpleScopeTypeType, NodeMatcher>,
+  queryBasedMatchers:
+    | Partial<Record<SimpleScopeTypeType, NodeMatcher>>
+    | undefined,
   languageName: string
 ) {
   const duplicates = intersection(
