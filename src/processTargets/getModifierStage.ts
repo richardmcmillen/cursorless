@@ -19,6 +19,7 @@ import ContainingSyntaxScopeStage, {
   SimpleContainingScopeModifier,
 } from "./modifiers/scopeTypeStages/ContainingSyntaxScopeStage";
 import DocumentStage from "./modifiers/scopeTypeStages/DocumentStage";
+import ItemStage from "./modifiers/scopeTypeStages/ItemStage";
 import LineStage from "./modifiers/scopeTypeStages/LineStage";
 import NotebookCellStage from "./modifiers/scopeTypeStages/NotebookCellStage";
 import ParagraphStage from "./modifiers/scopeTypeStages/ParagraphStage";
@@ -83,6 +84,8 @@ const getContainingScopeStage = (
       );
     case "url":
       return new UrlStage(modifier as UrlModifier);
+    case "item":
+      return new ItemStage(modifier);
     case "surroundingPair":
       return new SurroundingPairStage(
         modifier as ContainingSurroundingPairModifier
