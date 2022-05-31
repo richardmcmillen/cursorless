@@ -110,8 +110,7 @@ export type SimpleScopeTypeType =
   | "character"
   | "word"
   | "nonWhitespaceSequence"
-  | "url"
-  | "item";
+  | "url";
 
 export interface SimpleScopeType {
   type: SimpleScopeTypeType;

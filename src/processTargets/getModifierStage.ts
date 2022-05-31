@@ -84,7 +84,7 @@ const getContainingScopeStage = (
       );
     case "url":
       return new UrlStage(modifier as UrlModifier);
-    case "item":
+    case "collectionItem":
       return new ItemStage(modifier);
     case "surroundingPair":
       return new SurroundingPairStage(

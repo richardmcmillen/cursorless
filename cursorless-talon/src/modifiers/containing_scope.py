@@ -54,7 +54,6 @@ scope_types = {
     "paint": "nonWhitespaceSequence",
     "link": "url",
     "token": "token",
-    "item": "item",
 }
 
 
