@@ -118,6 +118,7 @@ export default class OrdinalRangeSubTokenStage implements ModifierStage {
         delimiter: containingListDelimiter ?? "",
         leadingDelimiterRange,
         trailingDelimiterRange,
+        previousTarget: target,
       }),
     ];
   }

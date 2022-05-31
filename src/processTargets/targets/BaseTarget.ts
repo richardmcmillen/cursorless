@@ -14,11 +14,11 @@ export interface CommonTargetParameters {
   readonly editor: TextEditor;
   readonly isReversed: boolean;
   readonly contentRange: Range;
-  readonly thatTarget?: Target;
+  readonly previousTarget?: Target;
 }
 
 export interface CloneWithParameters {
-  readonly thatTarget?: Target;
+  readonly previousTarget?: Target;
   readonly contentRange?: Range;
 }
 
@@ -30,7 +30,7 @@ export default abstract class BaseTarget implements Target {
       editor: parameters.editor,
       isReversed: parameters.isReversed,
       contentRange: parameters.contentRange,
-      thatTarget: parameters.thatTarget,
+      previousTarget: parameters.previousTarget,
     };
   }
 
@@ -53,9 +53,14 @@ export default abstract class BaseTarget implements Target {
   }
 
   get thatTarget(): Target {
-    return this.state.thatTarget != null
-      ? this.state.thatTarget.thatTarget
+    return this.state.previousTarget != null &&
+      this.state.previousTarget.is("weak")
+      ? this.state.previousTarget.thatTarget
       : this;
+  }
+
+  get previousTarget(): Target | undefined {
+    return this.state.previousTarget;
   }
 
   get contentText(): string {
@@ -130,7 +135,7 @@ export default abstract class BaseTarget implements Target {
   }
 
   withThatTarget(thatTarget: Target): Target {
-    return this.cloneWith({ thatTarget });
+    return this.cloneWith({ previousTarget: thatTarget });
   }
 
   withContentRange(contentRange: Range): Target {

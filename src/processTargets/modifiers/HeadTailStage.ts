@@ -3,16 +3,35 @@ import { HeadModifier, TailModifier, Target } from "../../typings/target.types";
 import { ProcessedTargetsContext } from "../../typings/Types";
 import { ModifierStage } from "../PipelineStages.types";
 import TokenTarget from "../targets/TokenTarget";
+import WeakTarget from "../targets/WeakTarget";
+import { toLineTarget } from "./scopeTypeStages/LineStage";
 
 abstract class HeadTailStage implements ModifierStage {
-  abstract update(editor: TextEditor, range: Range): Range;
+  abstract update(
+    editor: TextEditor,
+    previousRange: Range,
+    nextRange: Range
+  ): Range;
 
   constructor(private isReversed: boolean) {}
 
   run(context: ProcessedTargetsContext, target: Target): Target[] {
-    const contentRange = this.update(target.editor, target.contentRange);
+    const { previousRange, nextRange } = (() => {
+      if (target.previousTarget != null) {
+        return {
+          previousRange: target.previousTarget.contentRange,
+          nextRange: target.contentRange,
+        };
+      }
+      return {
+        previousRange: target.contentRange,
+        nextRange: toLineTarget(target).contentRange,
+      };
+    })();
+
+    const contentRange = this.update(target.editor, previousRange, nextRange);
     return [
-      new TokenTarget({
+      new WeakTarget({
         editor: target.editor,
         isReversed: this.isReversed,
         contentRange,
@@ -26,8 +45,9 @@ export class HeadStage extends HeadTailStage {
     super(true);
   }
 
-  update(editor: TextEditor, range: Range) {
-    return new Range(new Position(range.start.line, 0), range.end);
+  update(editor: TextEditor, previousRange: Range, nextRange: Range) {
+    return new Range(nextRange.start, previousRange.end);
+    // return new Range(new Position(range.start.line, 0), range.end);
   }
 }
 
@@ -36,7 +56,8 @@ export class TailStage extends HeadTailStage {
     super(false);
   }
 
-  update(editor: TextEditor, range: Range) {
-    return new Range(range.start, editor.document.lineAt(range.end).range.end);
+  update(editor: TextEditor, previousRange: Range, nextRange: Range) {
+    return new Range(previousRange.start, nextRange.end);
+    // return new Range(range.start, editor.document.lineAt(range.end).range.end);
   }
 }

@@ -322,6 +322,8 @@ export interface Target {
   /** Internal target that should be used for the that mark */
   readonly thatTarget: Target;
 
+  readonly previousTarget: Target | undefined;
+
   /** Returns true if this target is of the given type */
   is(type: TargetType): boolean;
   getInteriorStrict(): Target[];
