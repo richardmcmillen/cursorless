@@ -59,10 +59,9 @@ export function shrinkRangeToFitContent(editor: TextEditor, range: Range) {
       }
       return range.start;
     }
-    const characterDelta = text.length - text.trimStart().length;
     return new Position(
       firstLine.lineNumber,
-      range.start.character + characterDelta
+      firstNonWhitespaceCharacterIndex(range, text)
     );
   })();
 
@@ -75,7 +74,7 @@ export function shrinkRangeToFitContent(editor: TextEditor, range: Range) {
         if (!line.isEmptyOrWhitespace) {
           return new Position(
             i,
-            lastNonWhitespaceCharacterIndex(line.range.end.character, line.text)
+            lastNonWhitespaceCharacterIndex(line.range, line.text)
           );
         }
       }
@@ -83,14 +82,19 @@ export function shrinkRangeToFitContent(editor: TextEditor, range: Range) {
     }
     return new Position(
       endLine.lineNumber,
-      lastNonWhitespaceCharacterIndex(range.end.character, text)
+      lastNonWhitespaceCharacterIndex(range, text)
     );
   })();
 
   return new Range(start, end);
 }
 
-function lastNonWhitespaceCharacterIndex(characterIndex: number, text: string) {
+function firstNonWhitespaceCharacterIndex(range: Range, text: string) {
+  const characterDelta = text.length - text.trimStart().length;
+  return range.start.character + characterDelta;
+}
+
+function lastNonWhitespaceCharacterIndex(range: Range, text: string) {
   const characterDelta = text.length - text.trimEnd().length;
-  return characterIndex - characterDelta;
+  return range.end.character - characterDelta;
 }
