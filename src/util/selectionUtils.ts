@@ -1,5 +1,4 @@
 import { Position, Range, Selection, TextEditor } from "vscode";
-import { fitRangeToLineContent } from "../processTargets/modifiers/scopeTypeStages/LineStage";
 import { SelectionWithEditor } from "../typings/Types";
 
 export function isForward(selection: Selection) {
