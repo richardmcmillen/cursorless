@@ -3,8 +3,9 @@ import { Target, TargetType } from "../../typings/target.types";
 import { createContinuousRange } from "../targetUtil/createContinuousRange";
 import BaseTarget, {
   CloneWithParameters,
-  CommonTargetParameters,
+  CommonTargetParameters
 } from "./BaseTarget";
+import InteriorTarget from "./InteriorTarget";
 import WeakTarget, { createContinuousRangeWeakTarget } from "./WeakTarget";
 
 interface SurroundingPairTargetParameters extends CommonTargetParameters {
@@ -42,7 +43,7 @@ export default class SurroundingPairTarget extends BaseTarget {
 
   getInteriorStrict() {
     return [
-      new WeakTarget({
+      new InteriorTarget({
         editor: this.editor,
         isReversed: this.isReversed,
         contentRange: this.interiorRange_,
