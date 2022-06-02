@@ -278,23 +278,7 @@ export interface EditNewDelimiterContext {
 
 export type EditNewContext = EditNewCommandContext | EditNewDelimiterContext;
 
-export type TargetType =
-  | "delimiterRange"
-  | "document"
-  | "line"
-  | "notebookCell"
-  | "paragraph"
-  | "position"
-  | "rawSelection"
-  | "scopeType"
-  | "surroundingPair"
-  | "token"
-  | "weak";
-
 export interface Target {
-  /** The type of this target */
-  readonly type: TargetType;
-
   /** The text editor used for all ranges */
   readonly editor: TextEditor;
 
@@ -304,14 +288,17 @@ export interface Target {
   /** The range of the content */
   readonly contentRange: Range;
 
-  /** If this selection has a delimiter. For example, new line for a line or paragraph and comma for a list or argument */
-  readonly delimiter?: string;
-
-  /** The current position */
-  readonly position?: Position;
+  /** If this selection has a delimiter use it for inserting before or after the target. For example, new line for a line or paragraph and comma for a list or argument */
+  readonly insertionDelimiter: string;
 
   /** If true this target should be treated as a line */
   readonly isLine: boolean;
+
+  /** If true this target is weak and can be transformed/upgraded */
+  readonly isWeak: boolean;
+
+  /** If true this target is a raw selection and its insertion delimiter should not be used on bring action */
+  readonly isRaw: boolean;
 
   /** The text contained in the content range */
   readonly contentText: string;
@@ -322,14 +309,12 @@ export interface Target {
   /** Internal target that should be used for the that mark */
   readonly thatTarget: Target;
 
-  /** Returns true if this target is of the given type */
-  is(type: TargetType): boolean;
   getInteriorStrict(): Target[];
   getBoundaryStrict(): Target[];
   /** The range of the delimiter before the content selection */
-  getLeadingDelimiterRange(force?: boolean): Range | undefined;
+  getLeadingDelimiterTarget(): Target | undefined;
   /** The range of the delimiter after the content selection */
-  getTrailingDelimiterRange(force?: boolean): Range | undefined;
+  getTrailingDelimiterTarget(): Target | undefined;
   getRemovalRange(): Range;
   getRemovalHighlightRange(): Range | undefined;
   getEditNewContext(isBefore: boolean): EditNewContext;
@@ -343,6 +328,9 @@ export interface Target {
   ): Target;
   /** Constructs change/insertion edit. Adds delimiter before/after if needed */
   constructChangeEdit(text: string): EditWithRangeUpdater;
+  /** Constructs change/insertion edit. Differs from constructChangeEdit in that it does not add padding on insertion */
+  constructEmptyChangeEdit(): EditWithRangeUpdater;
   /** Constructs removal edit */
   constructRemovalEdit(): EditWithRangeUpdater;
+  isEqual(target: Target): boolean;
 }
