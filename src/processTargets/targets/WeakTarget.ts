@@ -1,9 +1,11 @@
-import { Target, TargetType } from "../../typings/target.types";
-import { createContinuousRange } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
+import { Range } from "vscode";
+import { Target } from "../../typings/target.types";
+import {
+  getTokenLeadingDelimiterTarget,
+  getTokenRemovalRange,
+  getTokenTrailingDelimiterTarget,
+} from "../targetUtil/insertionRemovalBehaviors/TokenInsertionRemovalBehavior";
+import BaseTarget from "./BaseTarget";
 
 /**
  * - Treated as "line" for "pour", "clone", and "breakpoint"
@@ -11,59 +13,20 @@ import BaseTarget, {
  * - Expand to nearest containing pair when asked for boundary or interior
  */
 export default class WeakTarget extends BaseTarget {
-  constructor(parameters: CommonTargetParameters) {
-    super(parameters);
-  }
+  insertionDelimiter = " ";
+  isWeak = true;
 
-  get type(): TargetType {
-    return "weak";
+  getLeadingDelimiterTarget(): Target | undefined {
+    return getTokenLeadingDelimiterTarget(this);
   }
-  get delimiter() {
-    return " ";
+  getTrailingDelimiterTarget(): Target | undefined {
+    return getTokenTrailingDelimiterTarget(this);
   }
-
-  cloneWith(parameters: CloneWithParameters) {
-    return new WeakTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
-
-  createContinuousRangeTarget(
-    isReversed: boolean,
-    endTarget: Target,
-    includeStart: boolean,
-    includeEnd: boolean
-  ): Target {
-    return createContinuousRangeWeakTarget(
-      isReversed,
-      this,
-      endTarget,
-      includeStart,
-      includeEnd
-    );
+  getRemovalRange(): Range {
+    return getTokenRemovalRange(this);
   }
 
   protected getCloneParameters() {
     return this.state;
   }
-}
-
-export function createContinuousRangeWeakTarget(
-  isReversed: boolean,
-  startTarget: Target,
-  endTarget: Target,
-  includeStart: boolean,
-  includeEnd: boolean
-): WeakTarget {
-  return new WeakTarget({
-    editor: startTarget.editor,
-    isReversed,
-    contentRange: createContinuousRange(
-      startTarget,
-      endTarget,
-      includeStart,
-      includeEnd
-    ),
-  });
 }

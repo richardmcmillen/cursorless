@@ -1,33 +1,24 @@
 import { Range, TextEditor } from "vscode";
-import { Target, TargetType } from "../../typings/target.types";
 import { fitRangeToLineContent } from "../modifiers/scopeTypeStages/LineStage";
-import { createContinuousRange } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
-import WeakTarget, { createContinuousRangeWeakTarget } from "./WeakTarget";
+import BaseTarget, { CommonTargetParameters } from "./BaseTarget";
+import WeakTarget from "./WeakTarget";
 
 export default class DocumentTarget extends BaseTarget {
+  insertionDelimiter = "\n";
+  isLine = true;
+
   constructor(parameters: CommonTargetParameters) {
     super(parameters);
   }
 
-  get type(): TargetType {
-    return "document";
-  }
-  get delimiter() {
-    return "\n";
-  }
-  get isLine() {
-    return true;
-  }
-
-  getLeadingDelimiterRange() {
+  getLeadingDelimiterTarget() {
     return undefined;
   }
-  getTrailingDelimiterRange() {
+  getTrailingDelimiterTarget() {
     return undefined;
+  }
+  getRemovalRange(): Range {
+    return this.contentRange;
   }
 
   getInteriorStrict() {
@@ -38,41 +29,6 @@ export default class DocumentTarget extends BaseTarget {
         contentRange: getDocumentContentRange(this.editor),
       }),
     ];
-  }
-
-  cloneWith(parameters: CloneWithParameters) {
-    return new DocumentTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
-
-  createContinuousRangeTarget(
-    isReversed: boolean,
-    endTarget: Target,
-    includeStart: boolean,
-    includeEnd: boolean
-  ): Target {
-    if (this.isSameType(endTarget)) {
-      return new DocumentTarget({
-        ...this.getCloneParameters(),
-        isReversed,
-        contentRange: createContinuousRange(
-          this,
-          endTarget,
-          includeStart,
-          includeEnd
-        ),
-      });
-    }
-
-    return createContinuousRangeWeakTarget(
-      isReversed,
-      this,
-      endTarget,
-      includeStart,
-      includeEnd
-    );
   }
 
   protected getCloneParameters() {

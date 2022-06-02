@@ -1,56 +1,45 @@
-import { Position, Range } from "vscode";
-import { Target, TargetType } from "../../typings/target.types";
+import { Position, Range, TextEditor } from "vscode";
+import { Target } from "../../typings/target.types";
+import { expandToFullLine } from "../../util/rangeUtils";
+import { tryConstructPlainTarget } from "../../util/tryConstructTarget";
 import { createContinuousLineRange } from "../targetUtil/createContinuousRange";
-import {
-  getLineLeadingDelimiterRange,
-  getLineTrailingDelimiterRange,
-} from "../targetUtil/getLineDelimiters";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
-import { createContinuousRangeWeakTarget } from "./WeakTarget";
+import BaseTarget from "./BaseTarget";
 
 export default class LineTarget extends BaseTarget {
-  constructor(parameters: CommonTargetParameters) {
-    super(parameters);
+  insertionDelimiter = "\n";
+  isLine = true;
+
+  private get fullLineContentRange() {
+    return expandToFullLine(this.editor, this.contentRange);
   }
 
-  get type(): TargetType {
-    return "line";
-  }
-  get delimiter() {
-    return "\n";
-  }
-  get isLine() {
-    return true;
-  }
-
-  protected get contentRemovalRange() {
-    return new Range(
-      new Position(this.contentRange.start.line, 0),
-      this.editor.document.lineAt(this.contentRange.end).range.end
+  getLeadingDelimiterTarget() {
+    return tryConstructPlainTarget(
+      this.editor,
+      getLeadingDelimiterRange(this.editor, this.fullLineContentRange),
+      this.isReversed
     );
   }
 
-  getLeadingDelimiterRange() {
-    return getLineLeadingDelimiterRange(this.editor, this.contentRemovalRange);
+  getTrailingDelimiterTarget() {
+    return tryConstructPlainTarget(
+      this.editor,
+      getTrailingDelimiterRange(this.editor, this.fullLineContentRange),
+      this.isReversed
+    );
   }
 
-  getTrailingDelimiterRange() {
-    return getLineTrailingDelimiterRange(this.editor, this.contentRemovalRange);
+  getRemovalRange() {
+    const contentRemovalRange = this.fullLineContentRange;
+    const delimiterTarget =
+      this.getTrailingDelimiterTarget() ?? this.getLeadingDelimiterTarget();
+
+    return delimiterTarget == null
+      ? contentRemovalRange
+      : contentRemovalRange.union(delimiterTarget.contentRange);
   }
 
-  getRemovalHighlightRange() {
-    return this.contentRange;
-  }
-
-  cloneWith(parameters: CloneWithParameters) {
-    return new LineTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
+  getRemovalHighlightRange = () => this.fullLineContentRange;
 
   createContinuousRangeTarget(
     isReversed: boolean,
@@ -58,9 +47,9 @@ export default class LineTarget extends BaseTarget {
     includeStart: boolean,
     includeEnd: boolean
   ): Target {
-    if (this.isSameType(endTarget) || endTarget.is("paragraph")) {
+    if (endTarget.isLine) {
       return new LineTarget({
-        ...this.getCloneParameters(),
+        editor: this.editor,
         isReversed,
         contentRange: createContinuousLineRange(
           this,
@@ -71,9 +60,8 @@ export default class LineTarget extends BaseTarget {
       });
     }
 
-    return createContinuousRangeWeakTarget(
+    return super.createContinuousRangeTarget(
       isReversed,
-      this,
       endTarget,
       includeStart,
       includeEnd
@@ -83,4 +71,18 @@ export default class LineTarget extends BaseTarget {
   protected getCloneParameters() {
     return this.state;
   }
+}
+
+function getLeadingDelimiterRange(editor: TextEditor, range: Range) {
+  const { start } = range;
+  return start.line > 0
+    ? new Range(editor.document.lineAt(start.line - 1).range.end, range.start)
+    : undefined;
+}
+
+function getTrailingDelimiterRange(editor: TextEditor, range: Range) {
+  const { end } = range;
+  return end.line + 1 < editor.document.lineCount
+    ? new Range(range.end, new Position(end.line + 1, 0))
+    : undefined;
 }

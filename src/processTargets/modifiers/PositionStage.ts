@@ -15,28 +15,39 @@ export default class PositionStage implements ModifierStage {
 export function toPositionTarget(target: Target, position: Position): Target {
   const { start, end } = target.contentRange;
   let contentRange: Range;
-  let delimiter: string | undefined;
+  let insertionDelimiter: string;
+
+  /**
+   * We give "after" and "before" targets a removal range for backwards
+   * compatibility. This allows user to continue saying "chuck before" and
+   * "chuck after" to remove leading or trailing delimiter. We prefer that users
+   * use leading and trailing instead, but "before" and "after" are sometimes
+   * easier to think of, so we're keeping them for now
+   */
+  let removalTarget: Target | undefined = undefined;
 
   switch (position) {
     case "before":
       contentRange = new Range(start, start);
-      delimiter = target.delimiter;
+      insertionDelimiter = target.insertionDelimiter;
+      removalTarget = target.getLeadingDelimiterTarget();
       break;
 
     case "after":
       contentRange = new Range(end, end);
-      delimiter = target.delimiter;
+      insertionDelimiter = target.insertionDelimiter;
+      removalTarget = target.getTrailingDelimiterTarget();
       break;
 
     case "start":
       contentRange = new Range(start, start);
       // This it NOT a raw target. Joining with this should be done on empty delimiter.
-      delimiter = "";
+      insertionDelimiter = "";
       break;
 
     case "end":
       contentRange = new Range(end, end);
-      delimiter = "";
+      insertionDelimiter = "";
       break;
   }
 
@@ -45,6 +56,8 @@ export function toPositionTarget(target: Target, position: Position): Target {
     isReversed: target.isReversed,
     contentRange,
     position,
-    delimiter,
+    insertionDelimiter,
+    isRaw: target.isRaw,
+    removalTarget,
   });
 }

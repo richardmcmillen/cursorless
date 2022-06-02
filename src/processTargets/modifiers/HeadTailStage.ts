@@ -1,8 +1,7 @@
-import { Position, Range, TextEditor } from "vscode";
+import { Range, TextEditor } from "vscode";
 import { HeadModifier, TailModifier, Target } from "../../typings/target.types";
 import { ProcessedTargetsContext } from "../../typings/Types";
 import { ModifierStage } from "../PipelineStages.types";
-import TokenTarget from "../targets/TokenTarget";
 import WeakTarget from "../targets/WeakTarget";
 import { toLineTarget } from "./scopeTypeStages/LineStage";
 
@@ -47,7 +46,6 @@ export class HeadStage extends HeadTailStage {
 
   update(editor: TextEditor, previousRange: Range, nextRange: Range) {
     return new Range(nextRange.start, previousRange.end);
-    // return new Range(new Position(range.start.line, 0), range.end);
   }
 }
 
@@ -58,6 +56,5 @@ export class TailStage extends HeadTailStage {
 
   update(editor: TextEditor, previousRange: Range, nextRange: Range) {
     return new Range(previousRange.start, nextRange.end);
-    // return new Range(range.start, editor.document.lineAt(range.end).range.end);
   }
 }

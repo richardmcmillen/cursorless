@@ -1,61 +1,54 @@
+import { isEqual } from "lodash";
 import { Range, Selection, TextEditor } from "vscode";
-import {
-  EditNewContext,
-  Position,
-  Target,
-  TargetType,
-} from "../../typings/target.types";
+import { EditNewContext, Target } from "../../typings/target.types";
 import { EditWithRangeUpdater } from "../../typings/Types";
 import { selectionFromRange } from "../../util/selectionUtils";
-import { getTokenDelimiters } from "../targetUtil/getTokenDelimiters";
+import { isSameType } from "../../util/typeUtils";
+import {
+  createContinuousRange,
+  createContinuousRangeWeakTarget,
+} from "../targetUtil/createContinuousRange";
 
 /** Parameters supported by all target classes */
 export interface CommonTargetParameters {
   readonly editor: TextEditor;
   readonly isReversed: boolean;
   readonly contentRange: Range;
+  readonly thatTarget?: Target;
   readonly previousTarget?: Target;
 }
 
 export interface CloneWithParameters {
-  readonly previousTarget?: Target;
+  readonly thatTarget?: Target;
   readonly contentRange?: Range;
 }
 
 export default abstract class BaseTarget implements Target {
   protected readonly state: CommonTargetParameters;
+  isLine = false;
+  isWeak = false;
+  isRaw = false;
 
   constructor(parameters: CommonTargetParameters) {
     this.state = {
       editor: parameters.editor,
       isReversed: parameters.isReversed,
       contentRange: parameters.contentRange,
+      thatTarget: parameters.thatTarget,
       previousTarget: parameters.previousTarget,
     };
   }
 
-  abstract get type(): TargetType;
-  abstract get delimiter(): string | undefined;
   get editor() {
     return this.state.editor;
   }
   get isReversed() {
     return this.state.isReversed;
   }
-  protected get contentRemovalRange() {
-    return this.contentRange;
-  }
-  get position(): Position | undefined {
-    return undefined;
-  }
-  get isLine() {
-    return false;
-  }
 
   get thatTarget(): Target {
-    return this.state.previousTarget != null &&
-      this.state.previousTarget.is("weak")
-      ? this.state.previousTarget.thatTarget
+    return this.state.thatTarget != null
+      ? this.state.thatTarget.thatTarget
       : this;
   }
 
@@ -75,32 +68,16 @@ export default abstract class BaseTarget implements Target {
     return this.state.contentRange;
   }
 
-  is(type: TargetType): boolean {
-    return this.type === type;
-  }
-
-  getLeadingDelimiterRange(force?: boolean) {
-    const { includeDelimitersInRemoval, leadingDelimiterRange } =
-      getTokenDelimiters(this.state.editor, this.state.contentRange);
-    return includeDelimitersInRemoval || force
-      ? leadingDelimiterRange
-      : undefined;
-  }
-
-  getTrailingDelimiterRange(force?: boolean) {
-    const { includeDelimitersInRemoval, trailingDelimiterRange } =
-      getTokenDelimiters(this.state.editor, this.state.contentRange);
-    return includeDelimitersInRemoval || force
-      ? trailingDelimiterRange
-      : undefined;
-  }
-
   constructChangeEdit(text: string): EditWithRangeUpdater {
     return {
       range: this.contentRange,
       text,
       updateRange: (range) => range,
     };
+  }
+
+  constructEmptyChangeEdit(): EditWithRangeUpdater {
+    return this.constructChangeEdit("");
   }
 
   constructRemovalEdit(): EditWithRangeUpdater {
@@ -112,7 +89,7 @@ export default abstract class BaseTarget implements Target {
   }
 
   getEditNewContext(isBefore: boolean): EditNewContext {
-    const delimiter = this.delimiter ?? "";
+    const delimiter = this.insertionDelimiter ?? "";
     if (delimiter === "\n" && !isBefore) {
       return { type: "command", command: "editor.action.insertLineAfter" };
     }
@@ -122,20 +99,12 @@ export default abstract class BaseTarget implements Target {
     };
   }
 
-  getRemovalRange(): Range {
-    const delimiterRange =
-      this.getTrailingDelimiterRange() ?? this.getLeadingDelimiterRange();
-    return delimiterRange != null
-      ? this.contentRemovalRange.union(delimiterRange)
-      : this.contentRemovalRange;
-  }
-
   getRemovalHighlightRange(): Range | undefined {
     return this.getRemovalRange();
   }
 
   withThatTarget(thatTarget: Target): Target {
-    return this.cloneWith({ previousTarget: thatTarget });
+    return this.cloneWith({ thatTarget });
   }
 
   withContentRange(contentRange: Range): Target {
@@ -149,17 +118,56 @@ export default abstract class BaseTarget implements Target {
     throw Error("No available boundaries");
   }
 
-  abstract cloneWith(parameters: CloneWithParameters): Target;
-  protected abstract getCloneParameters(): unknown;
+  readonly cloneWith = (parameters: CloneWithParameters) => {
+    const constructor = Object.getPrototypeOf(this).constructor;
 
-  abstract createContinuousRangeTarget(
+    return new constructor({
+      ...this.getCloneParameters(),
+      ...parameters,
+    });
+  };
+
+  protected abstract getCloneParameters(): object;
+
+  createContinuousRangeTarget(
     isReversed: boolean,
     endTarget: Target,
     includeStart: boolean,
     includeEnd: boolean
-  ): Target;
+  ): Target {
+    if (isSameType(this, endTarget)) {
+      const constructor = Object.getPrototypeOf(this).constructor;
 
-  protected isSameType(target: Target) {
-    return this.type === target.type;
+      return new constructor({
+        ...this.getCloneParameters(),
+        isReversed,
+        contentRange: createContinuousRange(
+          this,
+          endTarget,
+          includeStart,
+          includeEnd
+        ),
+      });
+    }
+
+    return createContinuousRangeWeakTarget(
+      isReversed,
+      this,
+      endTarget,
+      includeStart,
+      includeEnd
+    );
   }
+
+  isEqual(target: Target): boolean {
+    return (
+      target instanceof BaseTarget &&
+      isEqual(this.getCloneParameters(), target.getCloneParameters())
+    );
+  }
+
+  abstract get insertionDelimiter(): string;
+  abstract getLeadingDelimiterTarget(): Target | undefined;
+  abstract getTrailingDelimiterTarget(): Target | undefined;
+  abstract getRemovalRange(): Range;
 }

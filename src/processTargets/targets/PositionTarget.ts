@@ -1,55 +1,64 @@
-import { Position as VS_Position, Range, TextEditor } from "vscode";
-import { Position, Target, TargetType } from "../../typings/target.types";
+import * as vscode from "vscode";
+import { Range, TextEditor } from "vscode";
+import { Position, Target } from "../../typings/target.types";
 import { EditWithRangeUpdater } from "../../typings/Types";
-import { createContinuousRange } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
-import { createContinuousRangeWeakTarget } from "./WeakTarget";
+import BaseTarget, { CommonTargetParameters } from "./BaseTarget";
 
 interface PositionTargetParameters extends CommonTargetParameters {
   readonly position: Position;
-  readonly delimiter?: string;
+  readonly insertionDelimiter: string;
+  readonly isRaw: boolean;
+  readonly removalTarget: Target | undefined;
 }
 
 export default class PositionTarget extends BaseTarget {
-  private position_: Position;
-  private delimiter_: string | undefined;
+  insertionDelimiter: string;
+  isRaw: boolean;
+  private position: Position;
+  private removalTarget: Target | undefined;
 
   constructor(parameters: PositionTargetParameters) {
     super(parameters);
-    this.position_ = parameters.position;
-    this.delimiter_ = parameters.delimiter;
+    this.position = parameters.position;
+    this.insertionDelimiter = parameters.insertionDelimiter;
+    this.isRaw = parameters.isRaw;
+    this.removalTarget = parameters.removalTarget;
   }
 
-  get type(): TargetType {
-    return "position";
-  }
-  get delimiter() {
-    return this.delimiter_;
-  }
-  get position() {
-    return this.position_;
+  getLeadingDelimiterTarget = () => undefined;
+  getTrailingDelimiterTarget = () => undefined;
+  getRemovalRange = () =>
+    this.removalTarget?.getRemovalRange() ?? this.contentRange;
+
+  constructChangeEdit(text: string): EditWithRangeUpdater {
+    if (this.isInsertion()) {
+      return this.constructInsertionEdit(text, true);
+    }
+    return this.constructReplaceEdit(text);
   }
 
-  getLeadingDelimiterRange() {
-    return undefined;
-  }
-  getTrailingDelimiterRange() {
-    return undefined;
+  constructEmptyChangeEdit(): EditWithRangeUpdater {
+    if (this.isInsertion()) {
+      return this.constructInsertionEdit("", false);
+    }
+    return this.constructReplaceEdit("");
   }
 
-  private constructReplaceEdit(text: string): EditWithRangeUpdater {
+  protected getCloneParameters(): PositionTargetParameters {
     return {
-      range: this.contentRange,
-      text,
-      updateRange: (range) => range,
+      ...this.state,
+      position: this.position,
+      insertionDelimiter: this.insertionDelimiter,
+      isRaw: this.isRaw,
+      removalTarget: this.removalTarget,
     };
   }
 
-  private constructInsertionEdit(text: string): EditWithRangeUpdater {
-    const delimiter = this.delimiter!;
+  private constructInsertionEdit(
+    text: string,
+    useLinePadding: boolean
+  ): EditWithRangeUpdater {
+    const delimiter = this.insertionDelimiter;
     const isLine = delimiter.includes("\n");
     const isBefore = this.position === "before";
 
@@ -57,9 +66,13 @@ export default class PositionTarget extends BaseTarget {
       this.editor,
       this.contentRange,
       isLine,
+      useLinePadding,
       isBefore
     );
-    const padding = isLine ? getLinePadding(this.editor, range, isBefore) : "";
+    const padding =
+      isLine && useLinePadding
+        ? getLinePadding(this.editor, range, isBefore)
+        : "";
 
     const editText = isBefore
       ? text + delimiter + padding
@@ -78,64 +91,23 @@ export default class PositionTarget extends BaseTarget {
     };
 
     return {
-      range: this.contentRange,
+      range: range,
       text: editText,
       isReplace: this.position === "after",
       updateRange,
     };
   }
 
-  constructChangeEdit(text: string): EditWithRangeUpdater {
-    if (
-      this.delimiter != null &&
-      (this.position === "before" || this.position === "after")
-    ) {
-      return this.constructInsertionEdit(text);
-    }
-    return this.constructReplaceEdit(text);
-  }
-
-  cloneWith(parameters: CloneWithParameters) {
-    return new PositionTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
-
-  createContinuousRangeTarget(
-    isReversed: boolean,
-    endTarget: Target,
-    includeStart: boolean,
-    includeEnd: boolean
-  ): Target {
-    if (this.isSameType(endTarget)) {
-      return new PositionTarget({
-        ...this.getCloneParameters(),
-        isReversed,
-        contentRange: createContinuousRange(
-          this,
-          endTarget,
-          includeStart,
-          includeEnd
-        ),
-      });
-    }
-
-    return createContinuousRangeWeakTarget(
-      isReversed,
-      this,
-      endTarget,
-      includeStart,
-      includeEnd
-    );
-  }
-
-  protected getCloneParameters() {
+  private constructReplaceEdit(text: string): EditWithRangeUpdater {
     return {
-      ...this.state,
-      position: this.position_,
-      delimiter: this.delimiter_,
+      range: this.contentRange,
+      text,
+      updateRange: (range) => range,
     };
+  }
+
+  private isInsertion() {
+    return this.position === "before" || this.position === "after";
   }
 }
 
@@ -151,18 +123,21 @@ function getEditRange(
   editor: TextEditor,
   range: Range,
   isLine: boolean,
+  useLinePadding: boolean,
   isBefore: boolean
 ) {
-  let position: VS_Position;
+  let position: vscode.Position;
   if (isLine) {
     const line = editor.document.lineAt(isBefore ? range.start : range.end);
     if (isBefore) {
-      position = line.isEmptyOrWhitespace
-        ? range.start
-        : new VS_Position(
-            line.lineNumber,
-            line.firstNonWhitespaceCharacterIndex
-          );
+      position = useLinePadding
+        ? line.isEmptyOrWhitespace
+          ? range.start
+          : new vscode.Position(
+              line.lineNumber,
+              line.firstNonWhitespaceCharacterIndex
+            )
+        : line.range.start;
     } else {
       position = line.range.end;
     }
