@@ -2,7 +2,7 @@ import { Range, TextEditor } from "vscode";
 import { HeadModifier, TailModifier, Target } from "../../typings/target.types";
 import { ProcessedTargetsContext } from "../../typings/Types";
 import { ModifierStage } from "../PipelineStages.types";
-import WeakTarget from "../targets/WeakTarget";
+import PlainTarget from "../targets/PlainTarget";
 import { toLineTarget } from "./scopeTypeStages/LineStage";
 
 abstract class HeadTailStage implements ModifierStage {
@@ -30,7 +30,7 @@ abstract class HeadTailStage implements ModifierStage {
 
     const contentRange = this.update(target.editor, previousRange, nextRange);
     return [
-      new WeakTarget({
+      new PlainTarget({
         editor: target.editor,
         isReversed: this.isReversed,
         contentRange,
