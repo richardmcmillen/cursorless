@@ -1,56 +1,23 @@
-import { Target, TargetType } from "../../typings/target.types";
-import { createContinuousRange } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
-import { createContinuousRangeWeakTarget } from "./WeakTarget";
+import { Range } from "vscode";
+import { Target } from "../../typings/target.types";
+import {
+  getTokenLeadingDelimiterTarget,
+  getTokenRemovalRange,
+  getTokenTrailingDelimiterTarget,
+} from "../targetUtil/insertionRemovalBehaviors/TokenInsertionRemovalBehavior";
+import BaseTarget from "./BaseTarget";
 
 export default class TokenTarget extends BaseTarget {
-  constructor(parameters: CommonTargetParameters) {
-    super(parameters);
-  }
+  insertionDelimiter = " ";
 
-  get type(): TargetType {
-    return "token";
+  getLeadingDelimiterTarget(): Target | undefined {
+    return getTokenLeadingDelimiterTarget(this);
   }
-  get delimiter() {
-    return " ";
+  getTrailingDelimiterTarget(): Target | undefined {
+    return getTokenTrailingDelimiterTarget(this);
   }
-
-  cloneWith(parameters: CloneWithParameters) {
-    return new TokenTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
-
-  createContinuousRangeTarget(
-    isReversed: boolean,
-    endTarget: Target,
-    includeStart: boolean,
-    includeEnd: boolean
-  ): Target {
-    if (this.isSameType(endTarget)) {
-      return new TokenTarget({
-        ...this.getCloneParameters(),
-        isReversed,
-        contentRange: createContinuousRange(
-          this,
-          endTarget,
-          includeStart,
-          includeEnd
-        ),
-      });
-    }
-
-    return createContinuousRangeWeakTarget(
-      isReversed,
-      this,
-      endTarget,
-      includeStart,
-      includeEnd
-    );
+  getRemovalRange(): Range {
+    return getTokenRemovalRange(this);
   }
 
   protected getCloneParameters() {

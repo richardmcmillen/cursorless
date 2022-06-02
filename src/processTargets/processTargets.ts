@@ -1,4 +1,4 @@
-import { zip } from "lodash";
+import { uniqWith, zip } from "lodash";
 import { Range } from "vscode";
 import {
   PrimitiveTargetDescriptor,
@@ -8,11 +8,8 @@ import {
 } from "../typings/target.types";
 import { ProcessedTargetsContext } from "../typings/Types";
 import { ensureSingleEditor } from "../util/targetUtils";
-import uniqDeep from "../util/uniqDeep";
 import getMarkStage from "./getMarkStage";
 import getModifierStage from "./getModifierStage";
-import PositionTarget from "./targets/PositionTarget";
-import WeakTarget from "./targets/WeakTarget";
 
 /**
  * Converts the abstract target descriptions provided by the user to a concrete
@@ -32,7 +29,7 @@ export default function (
   context: ProcessedTargetsContext,
   targets: TargetDescriptor[]
 ): Target[][] {
-  return targets.map((target) => uniqDeep(processTarget(context, target)));
+  return targets.map((target) => uniqTargets(processTarget(context, target)));
 }
 
 function processTarget(
@@ -147,25 +144,7 @@ function processVerticalRangeTarget(
       anchorTarget.contentRange.end.character
     );
 
-    if (anchorTarget.position != null) {
-      results.push(
-        new PositionTarget({
-          editor: anchorTarget.editor,
-          isReversed: anchorTarget.isReversed,
-          contentRange,
-          position: anchorTarget.position,
-          delimiter: anchorTarget.delimiter,
-        })
-      );
-    } else {
-      results.push(
-        new WeakTarget({
-          editor: anchorTarget.editor,
-          isReversed: anchorTarget.isReversed,
-          contentRange,
-        })
-      );
-    }
+    results.push(anchorTarget.withContentRange(contentRange));
 
     if (i === activeLine) {
       return results;
@@ -233,4 +212,8 @@ function processPrimitiveTarget(
 
 function calcIsReversed(anchor: Target, active: Target) {
   return anchor.contentRange.start.isAfter(active.contentRange.start);
+}
+
+function uniqTargets(array: Target[]): Target[] {
+  return uniqWith(array, (a, b) => a.isEqual(b));
 }

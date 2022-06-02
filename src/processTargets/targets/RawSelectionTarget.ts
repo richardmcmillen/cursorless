@@ -1,65 +1,17 @@
-import { Target, TargetType } from "../../typings/target.types";
-import { createContinuousRange } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
-import { createContinuousRangeWeakTarget } from "./WeakTarget";
+import BaseTarget from "./BaseTarget";
 
+/**
+ * A target that has no leading or trailing delimiters so it's removal range
+ * just consists of the content itself. Its insertion delimiter will be
+ * inherited from the source in the case of a bring after a bring before
+ */
 export default class RawSelectionTarget extends BaseTarget {
-  constructor(parameters: CommonTargetParameters) {
-    super(parameters);
-  }
+  insertionDelimiter = "";
+  isRaw = true;
 
-  get type(): TargetType {
-    return "rawSelection";
-  }
-  get delimiter() {
-    return undefined;
-  }
-  getLeadingDelimiterRange() {
-    return undefined;
-  }
-  getTrailingDelimiterRange() {
-    return undefined;
-  }
+  getLeadingDelimiterTarget = () => undefined;
+  getTrailingDelimiterTarget = () => undefined;
+  getRemovalRange = () => this.contentRange;
 
-  cloneWith(parameters: CloneWithParameters) {
-    return new RawSelectionTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
-
-  createContinuousRangeTarget(
-    isReversed: boolean,
-    endTarget: Target,
-    includeStart: boolean,
-    includeEnd: boolean
-  ): Target {
-    if (this.isSameType(endTarget)) {
-      return new RawSelectionTarget({
-        ...this.getCloneParameters(),
-        isReversed,
-        contentRange: createContinuousRange(
-          this,
-          endTarget,
-          includeStart,
-          includeEnd
-        ),
-      });
-    }
-
-    return createContinuousRangeWeakTarget(
-      isReversed,
-      this,
-      endTarget,
-      includeStart,
-      includeEnd
-    );
-  }
-
-  protected getCloneParameters() {
-    return this.state;
-  }
+  protected getCloneParameters = () => this.state;
 }

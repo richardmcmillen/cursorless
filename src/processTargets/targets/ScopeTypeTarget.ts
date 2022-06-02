@@ -1,76 +1,81 @@
 import { Range } from "vscode";
-import {
-  SimpleScopeTypeType,
-  Target,
-  TargetType,
-} from "../../typings/target.types";
+import { SimpleScopeTypeType, Target } from "../../typings/target.types";
+import { isSameType } from "../../util/typeUtils";
 import {
   createContinuousRange,
   createContinuousRangeFromRanges,
 } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters,
-} from "./BaseTarget";
-import { createContinuousRangeWeakTarget } from "./WeakTarget";
+import { getDelimitedSequenceRemovalRange } from "../targetUtil/insertionRemovalBehaviors/DelimitedSequenceInsertionRemovalBehavior";
+import {
+  getTokenLeadingDelimiterTarget,
+  getTokenRemovalRange,
+  getTokenTrailingDelimiterTarget,
+} from "../targetUtil/insertionRemovalBehaviors/TokenInsertionRemovalBehavior";
+import BaseTarget, { CommonTargetParameters } from "./BaseTarget";
+import PlainTarget from "./PlainTarget";
 
 export interface ScopeTypeTargetParameters extends CommonTargetParameters {
   readonly scopeTypeType: SimpleScopeTypeType;
   readonly delimiter?: string;
-  readonly contentRemovalRange?: Range;
+  readonly removalRange?: Range;
   readonly leadingDelimiterRange?: Range;
   readonly trailingDelimiterRange?: Range;
 }
 
 export default class ScopeTypeTarget extends BaseTarget {
   private scopeTypeType_: SimpleScopeTypeType;
-  private contentRemovalRange_?: Range;
+  private removalRange_?: Range;
   private leadingDelimiterRange_?: Range;
   private trailingDelimiterRange_?: Range;
   private hasDelimiterRange_: boolean;
-  private delimiter_: string;
+  insertionDelimiter: string;
 
   constructor(parameters: ScopeTypeTargetParameters) {
     super(parameters);
     this.scopeTypeType_ = parameters.scopeTypeType;
-    this.contentRemovalRange_ = parameters.contentRemovalRange;
+    this.removalRange_ = parameters.removalRange;
     this.leadingDelimiterRange_ = parameters.leadingDelimiterRange;
     this.trailingDelimiterRange_ = parameters.trailingDelimiterRange;
-    this.delimiter_ =
+    this.insertionDelimiter =
       parameters.delimiter ?? getDelimiter(parameters.scopeTypeType);
     this.hasDelimiterRange_ =
       !!this.leadingDelimiterRange_ || !!this.trailingDelimiterRange_;
   }
 
-  get type(): TargetType {
-    return "scopeType";
-  }
-  get delimiter() {
-    return this.delimiter_;
-  }
-  protected get contentRemovalRange() {
-    return this.contentRemovalRange_ ?? this.contentRange;
-  }
-
-  getLeadingDelimiterRange() {
-    if (this.hasDelimiterRange_) {
-      return this.leadingDelimiterRange_;
+  getLeadingDelimiterTarget(): Target | undefined {
+    if (this.leadingDelimiterRange_ != null) {
+      return new PlainTarget({
+        editor: this.editor,
+        isReversed: this.isReversed,
+        contentRange: this.leadingDelimiterRange_,
+      });
     }
-    return super.getLeadingDelimiterRange();
-  }
-
-  getTrailingDelimiterRange() {
-    if (this.hasDelimiterRange_) {
-      return this.trailingDelimiterRange_;
+    if (!this.hasDelimiterRange_) {
+      return getTokenLeadingDelimiterTarget(this);
     }
-    return super.getTrailingDelimiterRange();
+    return undefined;
   }
 
-  cloneWith(parameters: CloneWithParameters) {
-    return new ScopeTypeTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
+  getTrailingDelimiterTarget(): Target | undefined {
+    if (this.trailingDelimiterRange_ != null) {
+      return new PlainTarget({
+        editor: this.editor,
+        isReversed: this.isReversed,
+        contentRange: this.trailingDelimiterRange_,
+      });
+    }
+    if (!this.hasDelimiterRange_) {
+      return getTokenTrailingDelimiterTarget(this);
+    }
+    return undefined;
+  }
+
+  getRemovalRange(): Range {
+    return this.removalRange_ != null
+      ? getTokenRemovalRange(this, this.removalRange_)
+      : this.hasDelimiterRange_
+      ? getDelimitedSequenceRemovalRange(this)
+      : getTokenRemovalRange(this);
   }
 
   createContinuousRangeTarget(
@@ -79,15 +84,14 @@ export default class ScopeTypeTarget extends BaseTarget {
     includeStart: boolean,
     includeEnd: boolean
   ): Target {
-    if (this.isSameType(endTarget)) {
+    if (isSameType(this, endTarget)) {
       const scopeTarget = <ScopeTypeTarget>endTarget;
       if (this.scopeTypeType_ === scopeTarget.scopeTypeType_) {
         const contentRemovalRange =
-          this.contentRemovalRange_ != null ||
-          scopeTarget.contentRemovalRange_ != null
+          this.removalRange_ != null || scopeTarget.removalRange_ != null
             ? createContinuousRangeFromRanges(
-                this.contentRemovalRange_ ?? this.contentRange,
-                scopeTarget.contentRemovalRange_ ?? scopeTarget.contentRange,
+                this.removalRange_ ?? this.contentRange,
+                scopeTarget.removalRange_ ?? scopeTarget.contentRange,
                 includeStart,
                 includeEnd
               )
@@ -98,7 +102,7 @@ export default class ScopeTypeTarget extends BaseTarget {
           isReversed,
           leadingDelimiterRange: this.leadingDelimiterRange_,
           trailingDelimiterRange: scopeTarget.trailingDelimiterRange_,
-          contentRemovalRange,
+          removalRange: contentRemovalRange,
           contentRange: createContinuousRange(
             this,
             endTarget,
@@ -109,9 +113,8 @@ export default class ScopeTypeTarget extends BaseTarget {
       }
     }
 
-    return createContinuousRangeWeakTarget(
+    return super.createContinuousRangeTarget(
       isReversed,
-      this,
       endTarget,
       includeStart,
       includeEnd
@@ -122,7 +125,7 @@ export default class ScopeTypeTarget extends BaseTarget {
     return {
       ...this.state,
       scopeTypeType: this.scopeTypeType_,
-      contentRemovalRange: this.contentRemovalRange_,
+      contentRemovalRange: this.removalRange_,
       leadingDelimiterRange: this.leadingDelimiterRange_,
       trailingDelimiterRange: this.trailingDelimiterRange_,
     };

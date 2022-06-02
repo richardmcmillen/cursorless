@@ -1,12 +1,13 @@
 import { Range } from "vscode";
-import { Target, TargetType } from "../../typings/target.types";
-import { createContinuousRange } from "../targetUtil/createContinuousRange";
-import BaseTarget, {
-  CloneWithParameters,
-  CommonTargetParameters
-} from "./BaseTarget";
+import { Target } from "../../typings/target.types";
+import {
+  getTokenLeadingDelimiterTarget,
+  getTokenRemovalRange,
+  getTokenTrailingDelimiterTarget,
+} from "../targetUtil/insertionRemovalBehaviors/TokenInsertionRemovalBehavior";
+import BaseTarget, { CommonTargetParameters } from "./BaseTarget";
 import InteriorTarget from "./InteriorTarget";
-import WeakTarget, { createContinuousRangeWeakTarget } from "./WeakTarget";
+import TokenTarget from "./TokenTarget";
 
 interface SurroundingPairTargetParameters extends CommonTargetParameters {
   /**
@@ -25,6 +26,7 @@ interface SurroundingPairTargetParameters extends CommonTargetParameters {
 }
 
 export default class SurroundingPairTarget extends BaseTarget {
+  insertionDelimiter = " ";
   private interiorRange_: Range;
   private boundary_: [Range, Range];
 
@@ -34,11 +36,14 @@ export default class SurroundingPairTarget extends BaseTarget {
     this.interiorRange_ = parameters.interiorRange;
   }
 
-  get type(): TargetType {
-    return "surroundingPair";
+  getLeadingDelimiterTarget(): Target | undefined {
+    return getTokenLeadingDelimiterTarget(this);
   }
-  get delimiter() {
-    return " ";
+  getTrailingDelimiterTarget(): Target | undefined {
+    return getTokenTrailingDelimiterTarget(this);
+  }
+  getRemovalRange(): Range {
+    return getTokenRemovalRange(this);
   }
 
   getInteriorStrict() {
@@ -54,46 +59,11 @@ export default class SurroundingPairTarget extends BaseTarget {
   getBoundaryStrict() {
     return this.boundary_.map(
       (contentRange) =>
-        new WeakTarget({
+        new TokenTarget({
           editor: this.editor,
           isReversed: this.isReversed,
           contentRange,
         })
-    );
-  }
-
-  cloneWith(parameters: CloneWithParameters) {
-    return new SurroundingPairTarget({
-      ...this.getCloneParameters(),
-      ...parameters,
-    });
-  }
-
-  createContinuousRangeTarget(
-    isReversed: boolean,
-    endTarget: Target,
-    includeStart: boolean,
-    includeEnd: boolean
-  ): Target {
-    if (this.isSameType(endTarget)) {
-      return new SurroundingPairTarget({
-        ...this.getCloneParameters(),
-        isReversed,
-        contentRange: createContinuousRange(
-          this,
-          endTarget,
-          includeStart,
-          includeEnd
-        ),
-      });
-    }
-
-    return createContinuousRangeWeakTarget(
-      isReversed,
-      this,
-      endTarget,
-      includeStart,
-      includeEnd
     );
   }
 

@@ -46,6 +46,11 @@ suite("recorded test cases", async function () {
     sinon.restore();
   });
 
+  suiteSetup(async () => {
+    // Necessary because opening a notebook opens the panel for some reason
+    await vscode.commands.executeCommand("workbench.action.closePanel");
+  });
+
   getRecordedTestPaths().forEach((path) =>
     test(
       path.split(".")[0],
@@ -61,7 +66,7 @@ async function runTest(file: string) {
 
   // TODO The snapshot gets messed up with timing issues when running the recorded tests
   // "Couldn't find token default.a"
-  fixture.command.usePrePhraseSnapshot = false;
+  const usePrePhraseSnapshot = false;
 
   const cursorlessApi = await getCursorlessApi();
   const graph = cursorlessApi.graph!;
@@ -114,7 +119,7 @@ async function runTest(file: string) {
   await graph.hatTokenMap.addDecorations();
 
   const readableHatMap = await graph.hatTokenMap.getReadableMap(
-    fixture.command.usePrePhraseSnapshot
+    usePrePhraseSnapshot
   );
 
   // Assert that recorded decorations are present
@@ -122,7 +127,7 @@ async function runTest(file: string) {
 
   const returnValue = await vscode.commands.executeCommand(
     "cursorless.command",
-    fixture.command
+    { ...fixture.command, usePrePhraseSnapshot }
   );
 
   const marks =
