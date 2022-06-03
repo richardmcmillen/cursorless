@@ -30,7 +30,7 @@ class EditNew implements Action {
     this.run = this.run.bind(this);
   }
 
-  async run([targets]: [Target[]]) {
+  async run([targets]: [Target[]]): Promise<ActionReturnValue> {
     if (targets.some((target) => target.isNotebookCell)) {
       return this.handleNotebookCellTargets(targets);
     }
