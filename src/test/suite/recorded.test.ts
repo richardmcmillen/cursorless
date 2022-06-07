@@ -26,7 +26,6 @@ import sleep from "../../util/sleep";
 import { openNewEditor } from "../openNewEditor";
 import asyncSafety from "../util/asyncSafety";
 import { getRecordedTestPaths } from "../util/getFixturePaths";
-import { runSingleTest } from "./runSingleRecordedTest";
 
 function createPosition(position: PositionPlainObject) {
   return new vscode.Position(position.line, position.character);
@@ -40,7 +39,7 @@ function createSelection(selection: SelectionPlainObject): vscode.Selection {
 
 suite("recorded test cases", async function () {
   this.timeout("100s");
-  this.retries(runSingleTest() ? 0 : 5);
+  this.retries(5);
 
   teardown(() => {
     sinon.restore();
@@ -166,8 +165,19 @@ async function runTest(file: string) {
     marks
   );
 
+  const actualDecorations =
+    fixture.decorations == null
+      ? undefined
+      : testDecorationsToPlainObject(graph.editStyles.testDecorations);
+
   if (process.env.CURSORLESS_TEST_UPDATE_FIXTURES === "true") {
-    const outputFixture = { ...fixture, finalState: resultState, returnValue };
+    const outputFixture = {
+      ...fixture,
+      finalState: resultState,
+      decorations: actualDecorations,
+      returnValue,
+    };
+
     await fsp.writeFile(file, serialize(outputFixture));
   } else {
     assert.deepStrictEqual(
@@ -176,13 +186,11 @@ async function runTest(file: string) {
       "Unexpected final state"
     );
 
-    if (fixture.decorations != null) {
-      assert.deepStrictEqual(
-        testDecorationsToPlainObject(graph.editStyles.testDecorations),
-        fixture.decorations,
-        "Unexpected decorations"
-      );
-    }
+    assert.deepStrictEqual(
+      actualDecorations,
+      fixture.decorations,
+      "Unexpected decorations"
+    );
 
     assert.deepStrictEqual(
       returnValue,
