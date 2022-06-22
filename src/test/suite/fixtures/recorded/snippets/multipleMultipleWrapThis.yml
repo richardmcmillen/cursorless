@@ -1,0 +1,26 @@
+languageId: plaintext
+command:
+  spokenForm: multiple multiple wrap this
+  version: 2
+  targets:
+    - type: primitive
+      mark: {type: cursor}
+  usePrePhraseSnapshot: true
+  action:
+    name: wrapWithSnippet
+    args: [multiplePlaceholders.foo]
+initialState:
+  documentContents: Spaghetti Steve
+  selections:
+    - anchor: {line: 0, character: 0}
+      active: {line: 0, character: 15}
+  marks: {}
+finalState:
+  documentContents: My friend Spaghetti Steve likes to eat Spaghetti Steve with !
+  selections:
+    - anchor: {line: 0, character: 60}
+      active: {line: 0, character: 60}
+  thatMark:
+    - anchor: {line: 0, character: 0}
+      active: {line: 0, character: 61}
+fullTargets: [{type: primitive, mark: {type: cursor}, modifiers: []}]

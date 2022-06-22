@@ -1,0 +1,27 @@
+languageId: plaintext
+command:
+  spokenForm: snip multiple multiple
+  version: 2
+  targets:
+    - {type: primitive, isImplicit: true}
+  usePrePhraseSnapshot: true
+  action:
+    name: insertSnippet
+    args: [multiplePlaceholders]
+initialState:
+  documentContents: ""
+  selections:
+    - anchor: {line: 0, character: 0}
+      active: {line: 0, character: 0}
+  marks: {}
+finalState:
+  documentContents: My friend  likes to eat  with !
+  selections:
+    - anchor: {line: 0, character: 10}
+      active: {line: 0, character: 10}
+    - anchor: {line: 0, character: 24}
+      active: {line: 0, character: 24}
+  thatMark:
+    - anchor: {line: 0, character: 0}
+      active: {line: 0, character: 31}
+fullTargets: [{type: primitive, mark: {type: cursor}, modifiers: [{type: toRawSelection}]}]

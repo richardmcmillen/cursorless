@@ -1,0 +1,25 @@
+{
+  "multiplePlaceholders": {
+    "definitions": [
+      {
+        "scope": {
+          "langIds": [
+            "plaintext"
+          ]
+        },
+        "body": [
+          "My friend $foo likes to eat $foo with $bar!"
+        ],
+        "variables": {
+          "foo": {
+            "formatter": "snakeCase"
+          },
+          "bar": {
+            "formatter": "camelCase"
+          }
+        }
+      }
+    ],
+    "description": "Snippet just for testing snippets with multiple placeholders"
+  }
+}
